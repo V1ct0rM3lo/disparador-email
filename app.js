@@ -78,7 +78,7 @@ app.post('/enviar-emails', async (req, res) => {
 
     <p style="margin-top: 20px; font-size: 12px; color: #888;">Se você não solicitou este e-mail, apenas ignore esta mensagem.</p>
 
-    <img src="http://localhost:3000/pixel?email=${encodeURIComponent(contato.email)}" width="1" height="1" style="display:none;">
+    <img src="https://disparador-email.onrender.com/pixel?email=${encodeURIComponent(contato.email)}" ...>
   </div>
 </div>
 `

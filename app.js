@@ -1,13 +1,13 @@
+require('dotenv').config();
 const express = require('express');
-const app = express();
-const fs = require('fs');
 const xlsx = require('xlsx');
+const nodemailer = require('nodemailer');
 const path = require('path');
-
-app.use(express.json());
-app.use(express.static('public'));
-
+const bodyParser = require('body-parser');
+const app = express();
 const PORT = 3000;
+
+let emailsStatus = {}; // Agora armazena { email: { status: 'Enviado'|'Pendente', cod: '...' } }
 
 app.use(express.static('public'));
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -17,84 +17,146 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'emails.html'));
 });
 
+// Configuração do transporte de e-mail
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    }
+});
 
-// Objeto que armazena os status dos e-mails
-let emailsStatus = {};
+// Função para ler e filtrar contatos da planilha
+function getContatosAtivos() {
+    const workbook = xlsx.readFile('./dados.xlsx');
+    const sheet = workbook.Sheets['Planilha1'];
+    const data = xlsx.utils.sheet_to_json(sheet);
 
-// Função para ler a planilha Excel
-function lerPlanilhaExcel() {
-    const workbook = xlsx.readFile('emails.xlsx');
-    const planilha = workbook.Sheets[workbook.SheetNames[0]];
-    const dados = xlsx.utils.sheet_to_json(planilha);
-    return dados;
+    return data.filter(d => d.SITUACAO === 'A' && d.EMAIL).map(d => ({
+        cod: d.COD_EMPRESA,
+        nome: d.NOME_EMPRESA,
+        cnpj: d.CNPJ,
+        email: d.EMAIL,
+        situacao: d.SITUACAO
+    }));
 }
 
-
-
-// Rota atualizada que junta planilha com os status atualizados
-app.get('/contatos', async (req, res) => {
-    try {
-        const contatos = lerPlanilhaExcel();
-
-        const contatosComStatus = contatos.map(c => {
-            const email = (c.email || '').toLowerCase().trim();
-            const statusInfo = emailsStatus[email];
-
-            return {
-                ...c,
-                status: statusInfo ? statusInfo.status : 'não enviado'
-            };
-        });
-
-        res.json(contatosComStatus);
-    } catch (err) {
-        console.error('Erro ao ler planilha:', err);
-        res.status(500).json({ error: 'Erro ao ler planilha' });
-    }
+// Rota para retornar os contatos ativos
+app.get('/contatos', (req, res) => {
+    const contatos = getContatosAtivos();
+    res.json(contatos);
 });
 
-// Rota que recebe clique do pixel de rastreamento
-app.get('/pixel.png', (req, res) => {
-    const { email } = req.query;
+// Envio dos e-mails selecionados
+app.post('/enviar-emails', async (req, res) => {
+    const selecionados = req.body.emails;
 
-    if (email) {
-        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-        const now = new Date().toISOString();
+    // Marca os e-mails como enviados
+    selecionados.forEach(contato => {
+      emailsStatus[contato.email.toLowerCase().trim()] = {
+    status: "Enviado",
+    cod: contato.cod
+};
 
-        const emailNormalizado = email.toLowerCase().trim();
+    });
 
-        emailsStatus[emailNormalizado] = {
-            status: 'visualizado',
-            ip,
-            data: now
-        };
+    for (const contato of selecionados) {
+        try {
+            await transporter.sendMail({
+                from: `"Disparador" <${process.env.EMAIL_USER}>`,
+                to: contato.email,
+                subject: '🔔 Notificação do Sistema - Disparo Automático',
+                html: `
+                <div style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
+                  <div style="background-color: #1e1e2f; color: #ffffff; padding: 15px; border-radius: 8px 8px 0 0;">
+                    <h2 style="margin: 0;">🚀 Sistema de Disparo Automático</h2>
+                  </div>
 
-        console.log(`📬 E-mail aberto por: ${emailNormalizado} - IP: ${ip} - ${now}`);
+                  <div style="background-color: #ffffff; padding: 20px; border-radius: 0 0 8px 8px;">
+                    <p>Olá, tudo certo? 🤖</p>
+                    <p>Este e-mail foi enviado automaticamente pelo nosso sistema Node.js como parte de um teste de funcionalidade.</p>
+                    <p>Você pode acessar nosso painel clicando no botão abaixo:</p>
 
-        // Salvar os dados em arquivo opcionalmente:
-        // fs.writeFileSync('status.json', JSON.stringify(emailsStatus, null, 2));
+                    <a href="https://seusite.com/painel" 
+                       style="display: inline-block; padding: 12px 24px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                      🔗 Acessar Painel
+                    </a>
+
+                    <p style="margin-top: 20px; font-size: 12px; color: #888;">Se você não solicitou este e-mail, apenas ignore esta mensagem.</p>
+                    <img src="https://disparador-email.onrender.com/pixel?email=${encodeURIComponent(contato.email)}" width="1" height="1" style="display:none;">
+                  </div>
+                </div>
+                `
+            });
+
+            console.log(`✅ Enviado para ${contato.email}`);
+        } catch (err) {
+            console.error(`❌ Erro com ${contato.email}: ${err.message}`);
+        }
     }
 
-    // Enviar imagem transparente (1x1)
-    const imgPath = path.join(__dirname, 'public/pixel.png');
-    res.sendFile(imgPath);
+    res.send({ status: "ok", enviados: selecionados.length });
 });
 
-// Rota para atualizar status manualmente (ex: ao clicar "Finalizado")
+// Pixel de rastreamento: detecta abertura do e-mail
+app.get('/pixel', (req, res) => {
+    const email = (req.query.email || "").toLowerCase().trim();
+    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+
+    console.log(`📬 E-mail aberto por: ${email} - IP: ${ip} - ${new Date().toISOString()}`);
+
+if (emailsStatus[email]) {
+    emailsStatus[email].status = "Visualizado";
+    emailsStatus[email].visualizadoEm = new Date().toISOString();
+}
+
+    const img = Buffer.from(
+        'R0lGODlhAQABAPAAAAAAAAAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==',
+        'base64'
+    );
+
+    res.writeHead(200, {
+        'Content-Type': 'image/gif',
+        'Content-Length': img.length
+    });
+
+    res.end(img);
+});
+
+// Rota para retornar os e-mails com status pendente
+app.get('/status-atualizado', (req, res) => {
+    const atualizados = [];
+
+    for (const [email, info] of Object.entries(emailsStatus)) {
+        if (info.status === 'Pendente') {
+            atualizados.push({
+                email,
+                cod: info.cod,
+                status: info.status
+            });
+        }
+    }
+
+    res.json(atualizados);
+});
+
+// Atualiza manualmente o status da empresa (via frontend)
 app.post('/atualizar-status/:codEmpresa', (req, res) => {
-    const { codEmpresa } = req.params;
+    const codEmpresa = req.params.codEmpresa;
     const { status } = req.body;
 
-    // você pode atualizar `emailsStatus` aqui se quiser associar com o código da empresa
-    res.sendStatus(200);
-});
+    console.log(`Status da empresa ${codEmpresa} atualizado para: ${status}`);
 
-// Rota para resetar tudo
-app.post('/resetar-tudo', (req, res) => {
-    emailsStatus = {};
-    res.sendStatus(200);
+    // Atualiza qualquer e-mail com o codEmpresa correspondente
+    Object.keys(emailsStatus).forEach(email => {
+        if (emailsStatus[email].cod === codEmpresa) {
+            emailsStatus[email].status = status;
+        }
+    });
+
+    res.status(200).json({ message: 'Status atualizado (simulado).' });
 });
 
 app.listen(PORT, () => {
-    console.log(`Servidor rodando em http://localhost:${PORT}`);
+    console.log(`🚀 Servidor rodando em: http://localhost:${PORT}`);
 });

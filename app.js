@@ -112,9 +112,9 @@ app.post('/atualizar-status/:codEmpresa', async (req, res) => {
 
 app.get('/pixel', (req, res) => {
     const email = req.query.email;
-    const ip = req.headers['x-forwarded-for'] || 'IP não encontrado'; // Sem usar req.connection
+    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
-    console.log(`E-mail aberto por: ${email} - IP: ${ip} - ${new Date().toISOString()}`);
+    console.log(E-mail aberto por: ${email} - IP: ${ip} - ${new Date().toISOString()});
 
     const img = Buffer.from(
         'R0lGODlhAQABAPAAAAAAAAAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==',

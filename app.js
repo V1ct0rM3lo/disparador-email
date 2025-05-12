@@ -9,6 +9,15 @@ app.use(express.static('public'));
 
 const PORT = 3000;
 
+app.use(express.static('public'));
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'emails.html'));
+});
+
+
 // Objeto que armazena os status dos e-mails
 let emailsStatus = {};
 
@@ -19,6 +28,8 @@ function lerPlanilhaExcel() {
     const dados = xlsx.utils.sheet_to_json(planilha);
     return dados;
 }
+
+
 
 // Rota atualizada que junta planilha com os status atualizados
 app.get('/contatos', async (req, res) => {

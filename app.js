@@ -137,3 +137,28 @@ app.get('/pixel', (req, res) => {
     res.end(img);
 });
 
+
+// Rota para retornar os emails com status "Pendente"
+app.get('/status-atualizado', (req, res) => {
+    const atualizados = [];
+
+    for (const [email, status] of Object.entries(emailsStatus)) {
+        if (status === 'Pendente') {
+            atualizados.push({
+                email,
+                cod: getCodEmpresaByEmail(email),
+                status
+            });
+        }
+    }
+
+    res.json(atualizados);
+});
+
+// Função auxiliar para buscar o código da empresa pelo email
+function getCodEmpresaByEmail(email) {
+    const contatos = getContatosAtivos();
+    const empresa = contatos.find(c => c.email === email);
+    return empresa ? empresa.cod : null;
+}
+

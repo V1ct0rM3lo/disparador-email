@@ -117,18 +117,21 @@ app.post('/atualizar-status/:codEmpresa', async (req, res) => {
 });
 
 app.get('/pixel', (req, res) => {
-  const email = req.query.email;
+    const email = req.query.email;
+    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
-  const emailObj = emailsStatus.find(e => e.email === email);
-  if (emailObj) {
-    emailObj.status = 'pendente'; // muda o status
-    console.log(`📬 E-mail aberto por: ${email} - Status alterado para pendente`);
-  } else {
-    console.log(`📭 E-mail aberto por: ${email} - (não encontrado na lista)`);
-  }
+    console.log(E-mail aberto por: ${email} - IP: ${ip} - ${new Date().toISOString()});
 
-  // responde com uma imagem transparente (pixel)
-  res.setHeader('Content-Type', 'image/png');
-  res.send(Buffer.from('...')); // você pode usar um buffer real de 1x1 se quiser
+    const img = Buffer.from(
+        'R0lGODlhAQABAPAAAAAAAAAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==',
+        'base64'
+    );
+
+    res.writeHead(200, {
+        'Content-Type': 'image/gif',
+        'Content-Length': img.length
+    });
+
+    res.end(img);
 });
 

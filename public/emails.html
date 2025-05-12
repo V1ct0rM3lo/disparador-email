@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-
 <head>
     <meta charset="UTF-8">
     <title>Disparador de E-mails</title>
@@ -16,8 +15,7 @@
             margin-bottom: 20px;
         }
 
-        th,
-        td {
+        th, td {
             border: 1px solid #ccc;
             padding: 8px;
             text-align: left;
@@ -69,18 +67,13 @@
                 const tbody = document.getElementById('tabela');
 
                 contatos.forEach(c => {
-                    let status = 'Não Enviado'; // valor padrão
-
-                    if (c.status === 'enviado') {
-                        status = 'Enviado';
-                    } else if (c.status === 'pendente') {
-                        status = 'Pendente';
-                    } else if (c.status === 'finalizado') {
-                        status = 'Finalizado';
-                    }
+                    let status = 'Não Enviado';
+                    if (c.status === 'enviado') status = 'Enviado';
+                    else if (c.status === 'pendente') status = 'Pendente';
+                    else if (c.status === 'finalizado') status = 'Finalizado';
 
                     const tr = document.createElement('tr');
-                    tr.dataset.codEmpresa = c.cod; // Adiciona o código da empresa para referência
+                    tr.dataset.codEmpresa = c.cod;
 
                     tr.innerHTML = `
                         <td><input type="checkbox" name="selecionado" value='${JSON.stringify(c)}'></td>
@@ -89,14 +82,13 @@
                         <td>${c.cnpj}</td>
                         <td>${c.email}</td>
                         <td>${c.situacao}</td>
-                        <td class="status" data-status="${status}">${status}</td>
+                        <td class="status" data-status="${status.toLowerCase()}">${status}</td>
                     `;
 
-                    // Adiciona evento de clique para alterar o status para "Finalizado"
                     tr.querySelector('.status').addEventListener('click', (e) => {
-                        if (e.target.dataset.status !== 'Finalizado') {
+                        if (e.target.dataset.status !== 'finalizado') {
                             e.target.textContent = 'Finalizado';
-                            e.target.dataset.status = 'Finalizado';
+                            e.target.dataset.status = 'finalizado';
                             atualizarStatus(c.cod, 'finalizado');
                         }
                     });
@@ -146,9 +138,8 @@
             const result = await res.json();
             alert(`Foram enviados ${result.enviados} e-mails com sucesso.`);
 
-            // Atualiza o status dos e-mails enviados para "Enviado"
             selecionados.forEach(c => {
-                const tr = document.querySelector(`[data-cod-empresa="${c.cod}"]`);
+                const tr = document.querySelector(`tr[data-cod-empresa="${c.cod}"]`);
                 if (tr) {
                     const statusCell = tr.querySelector('.status');
                     statusCell.textContent = 'Enviado';
@@ -160,8 +151,29 @@
             loading.style.display = 'none';
         });
 
+        // Verifica periodicamente se algum status foi atualizado para "pendente"
+        setInterval(async () => {
+            try {
+                const res = await fetch('/status-atualizado');
+                if (!res.ok) throw new Error("Erro ao verificar status.");
+                const atualizados = await res.json();
+
+                atualizados.forEach(statusAtual => {
+                    const tr = document.querySelector(`tr[data-cod-empresa="${statusAtual.cod}"]`);
+                    if (tr) {
+                        const statusCell = tr.querySelector('.status');
+                        if (statusCell.dataset.status === 'enviado' && statusAtual.status === 'pendente') {
+                            statusCell.textContent = 'Pendente';
+                            statusCell.dataset.status = 'pendente';
+                        }
+                    }
+                });
+            } catch (err) {
+                console.error("Erro ao buscar atualizações:", err);
+            }
+        }, 5000); // Verifica a cada 5 segundos
+
         carregarContatos();
     </script>
 </body>
-
 </html>

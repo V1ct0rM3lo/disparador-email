@@ -1,0 +1,19 @@
+{
+  "name": "disparador-de-email",
+  "version": "1.0.0",
+  "main": "app.js",
+  "dependencies": {
+    "body-parser": "^1.20.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^4.21.2",
+    "mysql": "^2.18.1",
+    "nodemailer": "^6.10.1",
+    "xlsx": "^0.18.5"
+  },
+  "scripts": {
+    "start": "node app.js"
+  },
+  "author": "",
+  "license": "ISC"
+}

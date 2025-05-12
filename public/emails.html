@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Disparador de E-mails</title>
+    <style>
+        body {
+            font-family: Arial;
+            margin: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background: #f0f0f0;
+        }
+
+        .loading {
+            display: none;
+        }
+
+        .status-finalizado {
+            cursor: pointer;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Selecione os e-mails para enviar</h2>
+    <form id="formEmails">
+        <table>
+            <thead>
+                <tr>
+                    <th>Selecionar</th>
+                    <th>Código da Empresa</th>
+                    <th>Nome da Empresa</th>
+                    <th>CNPJ</th>
+                    <th>Email</th>
+                    <th>Situação</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="tabela"></tbody>
+        </table>
+        <button type="submit">Enviar E-mails Selecionados</button>
+        <div class="loading">Enviando e-mails, aguarde...</div>
+    </form>
+
+    <script>
+        async function carregarContatos() {
+            try {
+                const res = await fetch('/contatos');
+                if (!res.ok) throw new Error("Erro ao carregar contatos.");
+
+                const contatos = await res.json();
+                const tbody = document.getElementById('tabela');
+
+                contatos.forEach(c => {
+                    let status = 'Não Enviado'; // valor padrão
+
+                    if (c.status === 'enviado') {
+                        status = 'Enviado';
+                    } else if (c.status === 'pendente') {
+                        status = 'Pendente';
+                    } else if (c.status === 'finalizado') {
+                        status = 'Finalizado';
+                    }
+
+                    const tr = document.createElement('tr');
+                    tr.dataset.codEmpresa = c.cod; // Adiciona o código da empresa para referência
+
+                    tr.innerHTML = `
+                        <td><input type="checkbox" name="selecionado" value='${JSON.stringify(c)}'></td>
+                        <td>${c.cod}</td>
+                        <td>${c.nome}</td>
+                        <td>${c.cnpj}</td>
+                        <td>${c.email}</td>
+                        <td>${c.situacao}</td>
+                        <td class="status" data-status="${status}">${status}</td>
+                    `;
+
+                    // Adiciona evento de clique para alterar o status para "Finalizado"
+                    tr.querySelector('.status').addEventListener('click', (e) => {
+                        if (e.target.dataset.status !== 'Finalizado') {
+                            e.target.textContent = 'Finalizado';
+                            e.target.dataset.status = 'Finalizado';
+                            atualizarStatus(c.cod, 'finalizado');
+                        }
+                    });
+
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                alert(`Erro: ${err.message}`);
+            }
+        }
+
+        async function atualizarStatus(codEmpresa, novoStatus) {
+            try {
+                const res = await fetch(`/atualizar-status/${codEmpresa}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: novoStatus })
+                });
+
+                if (!res.ok) throw new Error("Erro ao atualizar status.");
+            } catch (err) {
+                alert(`Erro ao atualizar status: ${err.message}`);
+            }
+        }
+
+        document.getElementById('formEmails').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const checkboxes = document.querySelectorAll('input[name="selecionado"]:checked');
+            const selecionados = Array.from(checkboxes).map(cb => JSON.parse(cb.value));
+
+            if (selecionados.length === 0) return alert("Selecione pelo menos um e-mail.");
+
+            const loading = document.querySelector('.loading');
+            loading.style.display = 'block';
+
+            const res = await fetch('/enviar-emails', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ emails: selecionados })
+            });
+
+            if (!res.ok) {
+                loading.style.display = 'none';
+                return alert("Erro ao enviar e-mails.");
+            }
+
+            const result = await res.json();
+            alert(`Foram enviados ${result.enviados} e-mails com sucesso.`);
+
+            // Atualiza o status dos e-mails enviados para "Enviado"
+            selecionados.forEach(c => {
+                const tr = document.querySelector(`[data-cod-empresa="${c.cod}"]`);
+                if (tr) {
+                    const statusCell = tr.querySelector('.status');
+                    statusCell.textContent = 'Enviado';
+                    statusCell.dataset.status = 'enviado';
+                    atualizarStatus(c.cod, 'enviado');
+                }
+            });
+
+            loading.style.display = 'none';
+        });
+
+        carregarContatos();
+    </script>
+</body>
+
+</html>

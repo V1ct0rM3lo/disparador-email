@@ -27,17 +27,46 @@
 
         .loading {
             display: none;
+            font-weight: bold;
+            color: blue;
         }
 
-        .status-finalizado {
+        .status {
             cursor: pointer;
             text-decoration: underline;
+        }
+
+        .status[data-status="enviado"] {
+            color: green;
+            font-weight: bold;
+        }
+
+        .status[data-status="pendente"] {
+            color: orange;
+            font-weight: bold;
+        }
+
+        .status[data-status="finalizado"] {
+            color: gray;
+            font-style: italic;
+        }
+
+        .status[data-status="não enviado"] {
+            color: red;
+            font-weight: bold;
+        }
+
+        #contador {
+            margin-bottom: 10px;
+            font-weight: bold;
         }
     </style>
 </head>
 
 <body>
     <h2>Selecione os e-mails para enviar</h2>
+    <div id="contador">Carregando...</div>
+
     <form id="formEmails">
         <table>
             <thead>
@@ -57,126 +86,149 @@
         <div class="loading">Enviando e-mails, aguarde...</div>
     </form>
 
-<script>
-    async function carregarContatos() {
-        try {
-            const res = await fetch('/contatos');
-            if (!res.ok) throw new Error("Erro ao carregar contatos.");
+    <script>
+        async function carregarContatos() {
+            try {
+                const res = await fetch('/contatos');
+                if (!res.ok) throw new Error("Erro ao carregar contatos.");
 
-            const contatos = await res.json();
-            const tbody = document.getElementById('tabela');
+                const contatos = await res.json();
+                const tbody = document.getElementById('tabela');
+                tbody.innerHTML = ''; // limpa a tabela
 
-            contatos.forEach(c => {
-                let status = 'Não Enviado';
-                if (c.status === 'enviado') status = 'Enviado';
-                else if (c.status === 'pendente') status = 'Pendente';
-                else if (c.status === 'finalizado') status = 'Finalizado';
+                let pendentes = 0;
 
-                const tr = document.createElement('tr');
-                tr.dataset.codEmpresa = c.cod;
+                contatos.forEach(c => {
+                    let status = 'Não Enviado';
+                    if (c.status === 'enviado') status = 'Enviado';
+                    else if (c.status === 'pendente') status = 'Pendente';
+                    else if (c.status === 'finalizado') status = 'Finalizado';
 
-                tr.innerHTML = `
-                    <td><input type="checkbox" name="selecionado" value='${JSON.stringify(c)}'></td>
-                    <td>${c.cod}</td>
-                    <td>${c.nome}</td>
-                    <td>${c.cnpj}</td>
-                    <td>${c.email}</td>
-                    <td>${c.situacao}</td>
-                    <td class="status" data-status="${status.toLowerCase()}">${status}</td>
-                `;
+                    if (status.toLowerCase() === 'não enviado') pendentes++;
 
-                tr.querySelector('.status').addEventListener('click', (e) => {
-                    if (e.target.dataset.status !== 'finalizado') {
-                        e.target.textContent = 'Finalizado';
-                        e.target.dataset.status = 'finalizado';
-                        atualizarStatus(c.cod, 'finalizado');
+                    const tr = document.createElement('tr');
+                    tr.dataset.codEmpresa = c.cod;
+
+                    const isDesativado = ['enviado', 'finalizado'].includes(c.status);
+
+                    tr.innerHTML = `
+                        <td><input type="checkbox" name="selecionado" value='${JSON.stringify(c)}' ${isDesativado ? 'disabled' : ''}></td>
+                        <td>${c.cod}</td>
+                        <td>${c.nome}</td>
+                        <td>${c.cnpj}</td>
+                        <td>${c.email}</td>
+                        <td>${c.situacao}</td>
+                        <td class="status" data-status="${status.toLowerCase()}">${status}</td>
+                    `;
+
+                    const statusCell = tr.querySelector('.status');
+                    statusCell.addEventListener('click', (e) => {
+                        if (statusCell.dataset.status !== 'finalizado') {
+                            statusCell.textContent = 'Finalizado';
+                            statusCell.dataset.status = 'finalizado';
+                            atualizarStatus(c.cod, 'finalizado');
+                        }
+                    });
+
+                    tbody.appendChild(tr);
+                });
+
+                document.getElementById('contador').textContent = `Pendentes para envio: ${pendentes}`;
+            } catch (err) {
+                alert(`Erro: ${err.message}`);
+                document.getElementById('contador').textContent = 'Erro ao carregar.';
+            }
+        }
+
+        async function atualizarStatus(codEmpresa, novoStatus) {
+            try {
+                const res = await fetch(`/atualizar-status/${codEmpresa}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: novoStatus })
+                });
+                if (!res.ok) throw new Error("Erro ao atualizar status.");
+            } catch (err) {
+                alert(`Erro ao atualizar status: ${err.message}`);
+            }
+        }
+
+        document.getElementById('formEmails').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const checkboxes = document.querySelectorAll('input[name="selecionado"]:checked');
+            const selecionados = Array.from(checkboxes).map(cb => JSON.parse(cb.value));
+
+            if (selecionados.length === 0) return alert("Selecione pelo menos um e-mail.");
+
+            const loading = document.querySelector('.loading');
+            loading.style.display = 'block';
+
+            try {
+                const res = await fetch('/enviar-emails', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ emails: selecionados })
+                });
+
+                if (!res.ok) throw new Error("Erro ao enviar e-mails.");
+
+                const result = await res.json();
+                alert(`Foram enviados ${result.enviados} e-mails com sucesso.`);
+
+                selecionados.forEach(c => {
+                    const tr = document.querySelector(`tr[data-cod-empresa="${c.cod}"]`);
+                    if (tr) {
+                        const statusCell = tr.querySelector('.status');
+                        if (statusCell.dataset.status === 'não enviado') {
+                            statusCell.textContent = 'Enviado';
+                            statusCell.dataset.status = 'enviado';
+                        }
+
+                        const checkbox = tr.querySelector('input[type="checkbox"]');
+                        checkbox.disabled = true;
+                        checkbox.checked = false;
+
+                        atualizarStatus(c.cod, 'enviado');
                     }
                 });
 
-                tbody.appendChild(tr);
-            });
-        } catch (err) {
-            alert(`Erro: ${err.message}`);
-        }
-    }
-
-    async function atualizarStatus(codEmpresa, novoStatus) {
-        try {
-            const res = await fetch(`/atualizar-status/${codEmpresa}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: novoStatus })
-            });
-
-            if (!res.ok) throw new Error("Erro ao atualizar status.");
-        } catch (err) {
-            alert(`Erro ao atualizar status: ${err.message}`);
-        }
-    }
-
-    document.getElementById('formEmails').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const checkboxes = document.querySelectorAll('input[name="selecionado"]:checked');
-        const selecionados = Array.from(checkboxes).map(cb => JSON.parse(cb.value));
-
-        if (selecionados.length === 0) return alert("Selecione pelo menos um e-mail.");
-
-        const loading = document.querySelector('.loading');
-        loading.style.display = 'block';
-
-        const res = await fetch('/enviar-emails', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ emails: selecionados })
-        });
-
-        if (!res.ok) {
-            loading.style.display = 'none';
-            return alert("Erro ao enviar e-mails.");
-        }
-
-        const result = await res.json();
-        alert(`Foram enviados ${result.enviados} e-mails com sucesso.`);
-
-        selecionados.forEach(c => {
-            const tr = document.querySelector(`tr[data-cod-empresa="${c.cod}"]`);
-            if (tr) {
-                const statusCell = tr.querySelector('.status');
-                if (statusCell.dataset.status === 'não enviado') {
-                    statusCell.textContent = 'Enviado';
-                    statusCell.dataset.status = 'enviado';
-                }
-                atualizarStatus(c.cod, 'enviado');
+                carregarContatos(); // recarrega contador
+            } catch (err) {
+                alert(`Erro: ${err.message}`);
+            } finally {
+                loading.style.display = 'none';
             }
         });
 
-        loading.style.display = 'none';
-    });
+        // Verificação periódica
+        setInterval(async () => {
+            try {
+                const res = await fetch('/status-atualizado');
+                if (!res.ok) throw new Error("Erro ao verificar status.");
+                const atualizados = await res.json();
 
-    // Verifica periodicamente se algum status foi atualizado para "pendente"
-    setInterval(async () => {
-        try {
-            const res = await fetch('/status-atualizado');
-            if (!res.ok) throw new Error("Erro ao verificar status.");
-            const atualizados = await res.json();
+                atualizados.forEach(statusAtual => {
+                    const tr = document.querySelector(`tr[data-cod-empresa="${statusAtual.cod}"]`);
+                    if (tr) {
+                        const statusCell = tr.querySelector('.status');
+                        if (statusCell.dataset.status === 'enviado' && statusAtual.status === 'pendente') {
+                            statusCell.textContent = 'Pendente';
+                            statusCell.dataset.status = 'pendente';
 
-            atualizados.forEach(statusAtual => {
-                const tr = document.querySelector(`tr[data-cod-empresa="${statusAtual.cod}"]`);
-                if (tr) {
-                    const statusCell = tr.querySelector('.status');
-                    if (statusCell.dataset.status === 'enviado' && statusAtual.status === 'pendente') {
-                        statusCell.textContent = 'Pendente';
-                        statusCell.dataset.status = 'pendente';
+                            const checkbox = tr.querySelector('input[type="checkbox"]');
+                            if (checkbox) checkbox.disabled = false;
+                        }
                     }
-                }
-            });
-        } catch (err) {
-            console.error("Erro ao buscar atualizações:", err);
-        }
-    }, 5000); // Verifica a cada 5 segundos
+                });
 
-    carregarContatos();
-</script>
+                carregarContatos(); // atualiza contador
+            } catch (err) {
+                console.error("Erro ao buscar atualizações:", err);
+            }
+        }, 5000); // a cada 5 segundos
 
+        carregarContatos();
+    </script>
 </body>
 </html>

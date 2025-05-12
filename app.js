@@ -114,7 +114,12 @@ app.get('/pixel', (req, res) => {
     const email = req.query.email;
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
-    console.log(E-mail aberto por: ${email} - IP: ${ip} - ${new Date().toISOString()});
+    console.log(`E-mail aberto por: ${email} - IP: ${ip} - ${new Date().toISOString()}`);
+
+    if (email && emailsStatus[email]) {
+        emailsStatus[email].status = 'pendente';
+        console.log(`Status de ${email} alterado para pendente`);
+    }
 
     const img = Buffer.from(
         'R0lGODlhAQABAPAAAAAAAAAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==',

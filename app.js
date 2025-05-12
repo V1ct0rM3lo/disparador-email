@@ -145,7 +145,3 @@ app.get('/pixel', async (req, res) => {
   res.set('Content-Type', 'image/gif');
   res.send(pixel);
 });
-
-    res.end(img);
-});
-

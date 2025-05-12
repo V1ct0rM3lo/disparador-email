@@ -128,8 +128,3 @@ app.get('/pixel', (req, res) => {
 
     res.end(img);
 });
-
-  res.set('Content-Type', 'image/gif');
-  res.send(pixel);
-});
-

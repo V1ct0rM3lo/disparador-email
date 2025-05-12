@@ -60,12 +60,28 @@
             margin-bottom: 10px;
             font-weight: bold;
         }
+
+        #resetarBtn {
+            margin-bottom: 20px;
+            padding: 8px 16px;
+            background-color: #d9534f;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        #resetarBtn:hover {
+            background-color: #c9302c;
+        }
     </style>
 </head>
 
 <body>
     <h2>Selecione os e-mails para enviar</h2>
     <div id="contador">Carregando...</div>
+
+    <button id="resetarBtn">Resetar Tudo</button>
 
     <form id="formEmails">
         <table>
@@ -94,7 +110,7 @@
 
                 const contatos = await res.json();
                 const tbody = document.getElementById('tabela');
-                tbody.innerHTML = ''; // limpa a tabela
+                tbody.innerHTML = '';
 
                 let pendentes = 0;
 
@@ -122,7 +138,7 @@
                     `;
 
                     const statusCell = tr.querySelector('.status');
-                    statusCell.addEventListener('click', (e) => {
+                    statusCell.addEventListener('click', () => {
                         if (statusCell.dataset.status !== 'finalizado') {
                             statusCell.textContent = 'Finalizado';
                             statusCell.dataset.status = 'finalizado';
@@ -193,7 +209,7 @@
                     }
                 });
 
-                carregarContatos(); // recarrega contador
+                carregarContatos();
             } catch (err) {
                 alert(`Erro: ${err.message}`);
             } finally {
@@ -201,32 +217,22 @@
             }
         });
 
-        // Verificação periódica
-        setInterval(async () => {
+        document.getElementById('resetarBtn').addEventListener('click', async () => {
+            if (!confirm("Tem certeza que deseja resetar todos os status para 'Não Enviado'?")) return;
+
             try {
-                const res = await fetch('/status-atualizado');
-                if (!res.ok) throw new Error("Erro ao verificar status.");
-                const atualizados = await res.json();
-
-                atualizados.forEach(statusAtual => {
-                    const tr = document.querySelector(`tr[data-cod-empresa="${statusAtual.cod}"]`);
-                    if (tr) {
-                        const statusCell = tr.querySelector('.status');
-                        if (statusCell.dataset.status === 'enviado' && statusAtual.status === 'pendente') {
-                            statusCell.textContent = 'Pendente';
-                            statusCell.dataset.status = 'pendente';
-
-                            const checkbox = tr.querySelector('input[type="checkbox"]');
-                            if (checkbox) checkbox.disabled = false;
-                        }
-                    }
+                const res = await fetch('/resetar-tudo', {
+                    method: 'POST'
                 });
 
-                carregarContatos(); // atualiza contador
+                if (!res.ok) throw new Error("Erro ao resetar.");
+
+                alert("Todos os status foram resetados com sucesso.");
+                carregarContatos();
             } catch (err) {
-                console.error("Erro ao buscar atualizações:", err);
+                alert(`Erro: ${err.message}`);
             }
-        }, 5000); // a cada 5 segundos
+        });
 
         carregarContatos();
     </script>

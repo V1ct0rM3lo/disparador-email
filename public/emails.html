@@ -152,26 +152,28 @@
         });
 
         // Verifica periodicamente se algum status foi atualizado para "pendente"
-        setInterval(async () => {
-            try {
-                const res = await fetch('/status-atualizado');
-                if (!res.ok) throw new Error("Erro ao verificar status.");
-                const atualizados = await res.json();
+     // Verifica periodicamente se algum status foi atualizado para "pendente"
+setInterval(async () => {
+    try {
+        const res = await fetch('/status-atualizado');
+        if (!res.ok) throw new Error("Erro ao verificar status.");
+        const atualizados = await res.json();
 
-                atualizados.forEach(statusAtual => {
-                    const tr = document.querySelector(`tr[data-cod-empresa="${statusAtual.cod}"]`);
-                    if (tr) {
-                        const statusCell = tr.querySelector('.status');
-                        if (statusCell.dataset.status === 'enviado' && statusAtual.status === 'pendente') {
-                            statusCell.textContent = 'Pendente';
-                            statusCell.dataset.status = 'pendente';
-                        }
-                    }
-                });
-            } catch (err) {
-                console.error("Erro ao buscar atualizações:", err);
+        atualizados.forEach(statusAtual => {
+            const tr = document.querySelector(`tr[data-cod-empresa="${statusAtual.cod}"]`);
+            if (tr) {
+                const statusCell = tr.querySelector('.status');
+                if (statusCell.dataset.status === 'enviado' && statusAtual.status === 'pendente') {
+                    statusCell.textContent = 'Pendente';
+                    statusCell.dataset.status = 'pendente';
+                }
             }
-        }, 5000); // Verifica a cada 5 segundos
+        });
+    } catch (err) {
+        console.error("Erro ao buscar atualizações:", err);
+    }
+}, 5000); // Verifica a cada 5 segundos
+
 
         carregarContatos();
     </script>

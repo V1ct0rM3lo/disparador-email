@@ -128,8 +128,10 @@ app.get('/pixel', (req, res) => {
 
     console.log(`E-mail aberto por: ${email} - IP: ${ip} - ${new Date().toISOString()}`);
 
-    // Atualiza o status para pendente
-    emailsStatus[email] = 'Pendente';
+    if (emailsStatus[email]) {
+    emailsStatus[email].status = "Pendente";
+}
+
 
     const img = Buffer.from(
         'R0lGODlhAQABAPAAAAAAAAAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==',

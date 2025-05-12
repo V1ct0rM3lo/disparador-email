@@ -6,6 +6,7 @@ const path = require('path');
 const bodyParser = require('body-parser');
 const app = express();
 const PORT = 3000;
+let emailsStatus = {}; // Correção: definindo emailsStatus como um objeto global
 
 app.use(express.static('public'));
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -14,7 +15,6 @@ app.use(bodyParser.json());
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'emails.html'));
 });
-
 
 // Transportador de e-mail
 const transporter = nodemailer.createTransport({
@@ -25,8 +25,6 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-// Lê dados da planilha
-// Lê dados da planilha
 // Lê dados da planilha
 function getContatosAtivos() {
     const workbook = xlsx.readFile('./dados.xlsx');
@@ -52,6 +50,11 @@ app.get('/contatos', (req, res) => {
 app.post('/enviar-emails', async (req, res) => {
     const selecionados = req.body.emails;
 
+    // Atualizando status dos emails para "Enviado"
+    selecionados.forEach(contato => {
+        emailsStatus[contato.email] = "Enviado";
+    });
+
     for (const contato of selecionados) {
         try {
             await transporter.sendMail({
@@ -59,30 +62,29 @@ app.post('/enviar-emails', async (req, res) => {
                 to: contato.email,
                 subject: '🔔 Notificação do Sistema - Disparo Automático',
                 html: `
-<div style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
-  <div style="background-color: #1e1e2f; color: #ffffff; padding: 15px; border-radius: 8px 8px 0 0;">
-    <h2 style="margin: 0;">🚀 Sistema de Disparo Automático</h2>
-  </div>
+    <div style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
+      <div style="background-color: #1e1e2f; color: #ffffff; padding: 15px; border-radius: 8px 8px 0 0;">
+        <h2 style="margin: 0;">🚀 Sistema de Disparo Automático</h2>
+      </div>
 
-  <div style="background-color: #ffffff; padding: 20px; border-radius: 0 0 8px 8px;">
-    <p>Olá, tudo certo? 🤖</p>
+      <div style="background-color: #ffffff; padding: 20px; border-radius: 0 0 8px 8px;">
+        <p>Olá, tudo certo? 🤖</p>
 
-    <p>Este e-mail foi enviado automaticamente pelo nosso sistema Node.js como parte de um teste de funcionalidade.</p>
+        <p>Este e-mail foi enviado automaticamente pelo nosso sistema Node.js como parte de um teste de funcionalidade.</p>
 
-    <p>Você pode acessar nosso painel clicando no botão abaixo:</p>
+        <p>Você pode acessar nosso painel clicando no botão abaixo:</p>
 
-    <a href="https://seusite.com/painel" 
-       style="display: inline-block; padding: 12px 24px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
-      🔗 Acessar Painel
-    </a>
+        <a href="https://seusite.com/painel" 
+           style="display: inline-block; padding: 12px 24px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
+          🔗 Acessar Painel
+        </a>
 
-    <p style="margin-top: 20px; font-size: 12px; color: #888;">Se você não solicitou este e-mail, apenas ignore esta mensagem.</p>
+        <p style="margin-top: 20px; font-size: 12px; color: #888;">Se você não solicitou este e-mail, apenas ignore esta mensagem.</p>
 
-    <img src="https://disparador-email.onrender.com/pixel?email=${encodeURIComponent(contato.email)}" ...>
-  </div>
-</div>
-`
-
+        <img src="http://localhost:3000/pixel?email=${encodeURIComponent(contato.email)}" width="1" height="1" style="display:none;">
+      </div>
+    </div>
+    `
             });
 
             console.log(`✅ Enviado para ${contato.email}`);
@@ -98,27 +100,32 @@ app.listen(PORT, () => {
     console.log(`Servidor no ar: http://localhost:${PORT}`);
 });
 
-
 app.post('/atualizar-status/:codEmpresa', async (req, res) => {
     const codEmpresa = req.params.codEmpresa;
     const { status } = req.body;
 
     console.log(`Status da empresa ${codEmpresa} atualizado para: ${status}`);
 
-    // Apenas envia uma resposta simulando sucesso
+    // Atualiza o status no emailsStatus
+    Object.keys(emailsStatus).forEach(email => {
+        if (emailsStatus[email] === 'Enviado') {
+            emailsStatus[email] = 'Pendente';
+        }
+    });
+
     res.status(200).json({ message: 'Status atualizado (simulado).' });
 });
 
-
 app.get('/pixel', (req, res) => {
     const email = req.query.email;
-    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    const ip = req.headers['x-forwarded-for'] || 'IP não encontrado'; // Sem usar req.connection
 
     console.log(`E-mail aberto por: ${email} - IP: ${ip} - ${new Date().toISOString()}`);
 
-    if (email && emailsStatus[email]) {
-        emailsStatus[email].status = 'pendente';
-        console.log(`Status de ${email} alterado para pendente`);
+    // Atualiza o status para Pendente
+    if (emailsStatus[email]) {
+        emailsStatus[email] = 'Pendente';
+        console.log(`Status do e-mail ${email} alterado para Pendente`);
     }
 
     const img = Buffer.from(

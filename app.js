@@ -124,7 +124,7 @@ app.get('/pixel', (req, res) => {
 
     // Atualiza o status para Pendente
     if (emailsStatus[email]) {
-        emailsStatus[email] = 'Pendente';
+        emailsStatus[email] = 'Pendente'; // Alterando o status para 'Pendente'
         console.log(`Status do e-mail ${email} alterado para Pendente`);
     }
 
@@ -140,3 +140,4 @@ app.get('/pixel', (req, res) => {
 
     res.end(img);
 });
+

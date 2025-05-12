@@ -81,7 +81,7 @@ app.post('/enviar-emails', async (req, res) => {
                 subject: '🔔 Notificação do Sistema - Disparo Automático',
                 html: `
                     <p>Olá! Este e-mail foi enviado automaticamente.</p>
-                    <img src="http://https://disparador-email.onrender.com/pixel?email=${encodeURIComponent(contato.email)}" width="1" height="1" style="display:none;">
+                    <img src="https://disparador-email.onrender.com/pixel?email=${encodeURIComponent(contato.email)}" width="1" height="1" style="display:none;">
                 `
             });
 

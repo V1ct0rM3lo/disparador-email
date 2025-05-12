@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <title>Disparador de E-mails</title>
@@ -15,7 +16,8 @@
             margin-bottom: 20px;
         }
 
-        th, td {
+        th,
+        td {
             border: 1px solid #ccc;
             padding: 8px;
             text-align: left;
@@ -60,28 +62,14 @@
             margin-bottom: 10px;
             font-weight: bold;
         }
-
-        #resetarBtn {
-            margin-bottom: 20px;
-            padding: 8px 16px;
-            background-color: #d9534f;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        #resetarBtn:hover {
-            background-color: #c9302c;
-        }
     </style>
 </head>
 
 <body>
     <h2>Selecione os e-mails para enviar</h2>
     <div id="contador">Carregando...</div>
+    <button type="button" id="resetarStatus" style="margin-left: 10px;">Resetar todos para NÃO ENVIADO</button>
 
-    <button id="resetarBtn">Resetar Tudo</button>
 
     <form id="formEmails">
         <table>
@@ -94,6 +82,8 @@
                     <th>Email</th>
                     <th>Situação</th>
                     <th>Status</th>
+                    <th>Visualizado</th>
+
                 </tr>
             </thead>
             <tbody id="tabela"></tbody>
@@ -107,45 +97,31 @@
             try {
                 const res = await fetch('/contatos');
                 if (!res.ok) throw new Error("Erro ao carregar contatos.");
-
                 const contatos = await res.json();
+
                 const tbody = document.getElementById('tabela');
                 tbody.innerHTML = '';
 
                 let pendentes = 0;
 
                 contatos.forEach(c => {
-                    let status = 'Não Enviado';
-                    if (c.status === 'enviado') status = 'Enviado';
-                    else if (c.status === 'pendente') status = 'Pendente';
-                    else if (c.status === 'finalizado') status = 'Finalizado';
-
-                    if (status.toLowerCase() === 'não enviado') pendentes++;
+                    const status = c.status?.toLowerCase() || 'não enviado';
+                    if (status === 'não enviado') pendentes++;
 
                     const tr = document.createElement('tr');
                     tr.dataset.codEmpresa = c.cod;
 
-                    const isDesativado = ['enviado', 'finalizado'].includes(c.status);
-
                     tr.innerHTML = `
-                        <td><input type="checkbox" name="selecionado" value='${JSON.stringify(c)}' ${isDesativado ? 'disabled' : ''}></td>
+                        <td><input type="checkbox" name="selecionado" value='${JSON.stringify(c)}'></td>
                         <td>${c.cod}</td>
                         <td>${c.nome}</td>
                         <td>${c.cnpj}</td>
                         <td>${c.email}</td>
                         <td>${c.situacao}</td>
-                        <td class="status" data-status="${status.toLowerCase()}">${status}</td>
+                        <td class="status" data-status="${status}">${c.status || 'Não enviado'}</td>
+                        <td>${(c.visualizado || '').toString().toUpperCase() === 'SIM' ? 'SIM' : 'NÃO'}</td>
+
                     `;
-
-                    const statusCell = tr.querySelector('.status');
-                    statusCell.addEventListener('click', () => {
-                        if (statusCell.dataset.status !== 'finalizado') {
-                            statusCell.textContent = 'Finalizado';
-                            statusCell.dataset.status = 'finalizado';
-                            atualizarStatus(c.cod, 'finalizado');
-                        }
-                    });
-
                     tbody.appendChild(tr);
                 });
 
@@ -156,25 +132,10 @@
             }
         }
 
-        async function atualizarStatus(codEmpresa, novoStatus) {
-            try {
-                const res = await fetch(`/atualizar-status/${codEmpresa}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ status: novoStatus })
-                });
-                if (!res.ok) throw new Error("Erro ao atualizar status.");
-            } catch (err) {
-                alert(`Erro ao atualizar status: ${err.message}`);
-            }
-        }
-
         document.getElementById('formEmails').addEventListener('submit', async (e) => {
             e.preventDefault();
-
             const checkboxes = document.querySelectorAll('input[name="selecionado"]:checked');
             const selecionados = Array.from(checkboxes).map(cb => JSON.parse(cb.value));
-
             if (selecionados.length === 0) return alert("Selecione pelo menos um e-mail.");
 
             const loading = document.querySelector('.loading');
@@ -191,25 +152,7 @@
 
                 const result = await res.json();
                 alert(`Foram enviados ${result.enviados} e-mails com sucesso.`);
-
-                selecionados.forEach(c => {
-                    const tr = document.querySelector(`tr[data-cod-empresa="${c.cod}"]`);
-                    if (tr) {
-                        const statusCell = tr.querySelector('.status');
-                        if (statusCell.dataset.status === 'não enviado') {
-                            statusCell.textContent = 'Enviado';
-                            statusCell.dataset.status = 'enviado';
-                        }
-
-                        const checkbox = tr.querySelector('input[type="checkbox"]');
-                        checkbox.disabled = true;
-                        checkbox.checked = false;
-
-                        atualizarStatus(c.cod, 'enviado');
-                    }
-                });
-
-                carregarContatos();
+                carregarContatos(); // Atualiza a tabela e contador
             } catch (err) {
                 alert(`Erro: ${err.message}`);
             } finally {
@@ -217,16 +160,12 @@
             }
         });
 
-        document.getElementById('resetarBtn').addEventListener('click', async () => {
-            if (!confirm("Tem certeza que deseja resetar todos os status para 'Não Enviado'?")) return;
+        document.getElementById('resetarStatus').addEventListener('click', async () => {
+            if (!confirm("Tem certeza que deseja resetar todos os status para 'NÃO ENVIADO'?")) return;
 
             try {
-                const res = await fetch('/resetar-tudo', {
-                    method: 'POST'
-                });
-
-                if (!res.ok) throw new Error("Erro ao resetar.");
-
+                const res = await fetch('/resetar-status', { method: 'POST' });
+                if (!res.ok) throw new Error("Erro ao resetar status.");
                 alert("Todos os status foram resetados com sucesso.");
                 carregarContatos();
             } catch (err) {
@@ -234,7 +173,9 @@
             }
         });
 
+
         carregarContatos();
     </script>
 </body>
+
 </html>

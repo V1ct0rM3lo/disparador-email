@@ -134,4 +134,3 @@ app.get('/pixel', (req, res) => {
 
     res.end(img);
 });
-

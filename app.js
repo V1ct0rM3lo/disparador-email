@@ -53,10 +53,11 @@ app.post('/enviar-emails', async (req, res) => {
 
     // Marca os e-mails como enviados
     selecionados.forEach(contato => {
-        emailsStatus[contato.email] = {
-            status: "Enviado",
-            cod: contato.cod
-        };
+      emailsStatus[contato.email.toLowerCase().trim()] = {
+    status: "Enviado",
+    cod: contato.cod
+};
+
     });
 
     for (const contato of selecionados) {
@@ -99,7 +100,7 @@ app.post('/enviar-emails', async (req, res) => {
 
 // Pixel de rastreamento: detecta abertura do e-mail
 app.get('/pixel', (req, res) => {
-    const email = req.query.email;
+    const email = (req.query.email || "").toLowerCase().trim();
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
     console.log(`📬 E-mail aberto por: ${email} - IP: ${ip} - ${new Date().toISOString()}`);
@@ -108,7 +109,6 @@ if (emailsStatus[email]) {
     emailsStatus[email].status = "Visualizado";
     emailsStatus[email].visualizadoEm = new Date().toISOString();
 }
-
 
     const img = Buffer.from(
         'R0lGODlhAQABAPAAAAAAAAAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==',

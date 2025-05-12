@@ -116,32 +116,19 @@ app.post('/atualizar-status/:codEmpresa', async (req, res) => {
     res.status(200).json({ message: 'Status atualizado (simulado).' });
 });
 
-app.get('/pixel', async (req, res) => {
+app.get('/pixel', (req, res) => {
   const email = req.query.email;
-  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
-  console.log(`E-mail aberto por: ${email} - IP: ${ip} - ${new Date().toISOString()}`);
-
-  try {
-    await connection('dados')  // sua tabela no banco
-      .where({ email })
-      .update({ status: 'pendente' });
-
-    console.log(`Status do ${email} atualizado para: pendente`);
-  } catch (err) {
-    console.error(`Erro ao atualizar status de ${email}: ${err.message}`);
+  const emailObj = emailsStatus.find(e => e.email === email);
+  if (emailObj) {
+    emailObj.status = 'pendente'; // muda o status
+    console.log(`📬 E-mail aberto por: ${email} - Status alterado para pendente`);
+  } else {
+    console.log(`📭 E-mail aberto por: ${email} - (não encontrado na lista)`);
   }
 
-  // Retornar imagem vazia (1x1 pixel) para o rastreamento funcionar
-  const pixel = Buffer.from([
-    0x47,0x49,0x46,0x38,0x39,0x61,0x01,0x00,
-    0x01,0x00,0x80,0xff,0x00,0xff,0xff,0xff,
-    0x00,0x00,0x00,0x21,0xf9,0x04,0x01,0x00,
-    0x00,0x00,0x00,0x2c,0x00,0x00,0x00,0x00,
-    0x01,0x00,0x01,0x00,0x00,0x02,0x02,0x4c,
-    0x01,0x00,0x3b,
-  ]);
-
-  res.set('Content-Type', 'image/gif');
-  res.send(pixel);
+  // responde com uma imagem transparente (pixel)
+  res.setHeader('Content-Type', 'image/png');
+  res.send(Buffer.from('...')); // você pode usar um buffer real de 1x1 se quiser
 });
+

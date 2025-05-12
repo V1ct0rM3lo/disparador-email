@@ -104,9 +104,11 @@ app.get('/pixel', (req, res) => {
 
     console.log(`📬 E-mail aberto por: ${email} - IP: ${ip} - ${new Date().toISOString()}`);
 
-    if (emailsStatus[email]) {
-        emailsStatus[email].status = "Pendente";
-    }
+if (emailsStatus[email]) {
+    emailsStatus[email].status = "Visualizado";
+    emailsStatus[email].visualizadoEm = new Date().toISOString();
+}
+
 
     const img = Buffer.from(
         'R0lGODlhAQABAPAAAAAAAAAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==',

@@ -152,15 +152,20 @@ app.get('/pixel', (req, res) => {
 app.get('/status-atualizado', (req, res) => {
     const atualizados = [];
 
-    for (const [email, status] of Object.entries(emailsStatus)) {
-        if (status === 'Pendente') {
-            atualizados.push({
-                email,
-                cod: getCodEmpresaByEmail(email),
-                status
-            });
-        }
+const atualizados = [];
+
+for (const [email, info] of Object.entries(emailsStatus)) {
+    if (info.status === 'Pendente') {
+        atualizados.push({
+            email,
+            cod: info.cod,
+            status: 'Pendente'
+        });
     }
+}
+
+res.json(atualizados);
+
 
     res.json(atualizados);
 });

@@ -51,9 +51,14 @@ app.post('/enviar-emails', async (req, res) => {
     const selecionados = req.body.emails;
 
     // Atualizando status dos emails para "Enviado"
-    selecionados.forEach(contato => {
-        emailsStatus[contato.email] = "Enviado";
-    });
+   // Atualizando status dos emails para "Enviado"
+selecionados.forEach(contato => {
+    emailsStatus[contato.email] = {
+        status: "Enviado",
+        cod: contato.cod
+    };
+});
+
 
     for (const contato of selecionados) {
         try {

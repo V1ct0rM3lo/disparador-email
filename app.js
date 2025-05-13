@@ -82,17 +82,17 @@ app.post('/enviar-emails', async (req, res) => {
                 to: contato.email,
                 subject: '🔔 Notificação do Sistema - Disparo Automático',
                 html: `
-    <div style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
-      <div style="background-color: #1e1e2f; color: #ffffff; padding: 15px; border-radius: 8px 8px 0 0;">
+    <div style="font-family: Arial, sans-serif; background-color: #ffffff; padding: 20px;">
+      <div style="background-color: #1e1e2f; color: #1a3c61; padding: 15px; border-radius: 8px 8px 0 0;">
         <h2 style="margin: 0;">GRUPO CMB - Assessoria Contábil e Consultoria Empresarial</h2>
       </div>
 
       <div style="background-color: #ffffff; padding: 20px; border-radius: 0 0 8px 8px;">
         <p>Prezados Clientes</p>
 
-        <p>Com os processos de inovações das escriturações contábeis do Grupo CMB, estamos enviando link para download dos extratos bancários automaticamente.</p>
+        <p>Com os processos de inovações das escriturações contábeis do Grupo CMB, estamos enviando o link para download dos extratos bancários automaticamente.</p>
 
-        <p>Para isso, precisamos que acessem o link disponível, para habilitar nossa plataforma a realizar os downloads automaticamente.</p>
+        <p>Para isso, precisamos que acessem o link disponível, para habilitar nossa plataforma.</p>
 
         <p>Segue o roteiro para realizar o procedimento:</p>
 

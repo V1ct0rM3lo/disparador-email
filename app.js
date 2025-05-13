@@ -204,22 +204,24 @@ if (emailCol !== null && visualizadoCol !== null) {
 
 
   // Resposta para o pixel
-  const imgBuffer = Buffer.from(
-    "R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==",
-    "base64"
-  );
+     // Resposta para o pixel
+    const imgBuffer = Buffer.from(
+      "R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==",
+      "base64"
+    );
 
-    // ...dentro da rota /pixel, no final:
     res.writeHead(200, {
       'Content-Type': 'image/gif',
       'Content-Length': imgBuffer.length
     });
     res.end(imgBuffer);
-  }
-}); // <== FECHA A ROTA /pixel AQUI
+  } // fecha o if (email)
+} // fecha o app.get('/pixel', ...)
+);
 
-// Agora sim, fora da rota /pixel
+// Inicia o servidor
 app.listen(PORT, () => {
-    console.log(`🚀 Servidor rodando em: http://localhost:${PORT}`);
+  console.log(`🚀 Servidor rodando em: http://localhost:${PORT}`);
 });
+
 

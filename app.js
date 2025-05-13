@@ -84,15 +84,17 @@ app.post('/enviar-emails', async (req, res) => {
                 html: `
     <div style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
       <div style="background-color: #1e1e2f; color: #ffffff; padding: 15px; border-radius: 8px 8px 0 0;">
-        <h2 style="margin: 0;">🚀 Sistema de Disparo Automático</h2>
+        <h2 style="margin: 0;">GRUPO CMB - Assessoria Contábil e Consultoria Empresarial</h2>
       </div>
 
       <div style="background-color: #ffffff; padding: 20px; border-radius: 0 0 8px 8px;">
-        <p>Olá, tudo certo? 🤖</p>
+        <p>Prezados Clientes</p>
 
-        <p>Este e-mail foi enviado automaticamente pelo nosso sistema Node.js como parte de um teste de funcionalidade.</p>
+        <p>Com os processos de inovações das escriturações contábeis do Grupo CMB, estamos enviando link para download dos extratos bancários automaticamente.</p>
 
-        <p>Você pode acessar nosso painel clicando no botão abaixo:</p>
+        <p>Para isso, precisamos que acessem o link disponível, para habilitar nossa plataforma a realizar os downloads automaticamente.</p>
+
+        <p>Segue o roteiro para realizar o procedimento:</p>
 
         <a href="https://seusite.com/painel" 
            style="display: inline-block; padding: 12px 24px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">

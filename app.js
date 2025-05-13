@@ -185,6 +185,21 @@ app.get('/pixel', async (req, res) => {
 });
 
 
+app.post('/resetar-status', async (req, res) => {
+  try {
+    await db.empresas.updateMany({}, {
+      $set: {
+        status: "Não enviado",
+        visualizado: null // ou "" dependendo da sua lógica
+      }
+    });
+    res.status(200).json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: "Erro ao resetar status" });
+  }
+});
+
+
 
 
 app.listen(PORT, () => {

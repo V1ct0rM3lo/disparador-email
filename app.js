@@ -80,9 +80,29 @@ app.post('/enviar-emails', async (req, res) => {
                 to: contato.email,
                 subject: '🔔 Notificação do Sistema - Disparo Automático',
                 html: `
-                    <p>Olá! Este e-mail foi enviado automaticamente.</p>
-                    <img src="https://disparador-email.onrender.com/pixel?email=${encodeURIComponent(contato.email)}" width="1" height="1" style="display:none;">
-                `
+    <div style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
+      <div style="background-color: #1e1e2f; color: #ffffff; padding: 15px; border-radius: 8px 8px 0 0;">
+        <h2 style="margin: 0;">🚀 Sistema de Disparo Automático</h2>
+      </div>
+
+      <div style="background-color: #ffffff; padding: 20px; border-radius: 0 0 8px 8px;">
+        <p>Olá, tudo certo? 🤖</p>
+
+        <p>Este e-mail foi enviado automaticamente pelo nosso sistema Node.js como parte de um teste de funcionalidade.</p>
+
+        <p>Você pode acessar nosso painel clicando no botão abaixo:</p>
+
+        <a href="https://seusite.com/painel" 
+           style="display: inline-block; padding: 12px 24px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
+          🔗 Acessar Painel
+        </a>
+
+        <p style="margin-top: 20px; font-size: 12px; color: #888;">Se você não solicitou este e-mail, apenas ignore esta mensagem.</p>
+
+        <img src="http://localhost:3000/pixel?email=${encodeURIComponent(contato.email)}" width="1" height="1" style="display:none;">
+      </div>
+    </div>
+    `
             });
 
             console.log(`✅ E-mail enviado para ${contato.email}`);
@@ -119,37 +139,32 @@ app.post('/enviar-emails', async (req, res) => {
 });
 
 
-app.get('/pixel', (req, res) => {
+app.get('/pixel', async (req, res) => {
     const email = req.query.email;
-    if (!email) return res.status(400).send('Email não informado.');
-
-    try {
+    if (email) {
         const workbook = xlsx.readFile('./dados.xlsx');
-        const sheet = workbook.Sheets['Planilha1'];
-        const data = xlsx.utils.sheet_to_json(sheet, { defval: '' });
+        const planilha = workbook.Sheets[workbook.SheetNames[0]];
+        const dados = xlsx.utils.sheet_to_json(planilha);
 
-        // Procura a linha com o email correspondente
-        const linhaIndex = data.findIndex(row => row.EMAIL?.toLowerCase() === email.toLowerCase());
-        if (linhaIndex >= 0) {
-            const visualizadoColIndex = Object.keys(data[0]).findIndex(col => col.toUpperCase() === 'VISUALIZADO');
-            if (visualizadoColIndex === -1) return res.status(500).send('Coluna VISUALIZADO não encontrada');
-
-            const colLetra = String.fromCharCode(65 + visualizadoColIndex); // A, B, C...
-            const excelRow = linhaIndex + 2; // +2 porque JSON começa do índice 0 e Excel da linha 2 (1-based + cabeçalho)
-            const celula = `${colLetra}${excelRow}`;
-
-            sheet[celula] = { t: 's', v: 'SIM' };
+        const index = dados.findIndex(d => d.email === email);
+        if (index !== -1) {
+            dados[index].VISUALIZADO = 'SIM';
+            const novaPlanilha = xlsx.utils.json_to_sheet(dados);
+            workbook.Sheets[workbook.SheetNames[0]] = novaPlanilha;
             xlsx.writeFile(workbook, './dados.xlsx');
         }
-
-        // Retorna o pixel transparente
-        const pixelGif = Buffer.from('R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==', 'base64');
-        res.setHeader('Content-Type', 'image/gif');
-        res.end(pixelGif);
-    } catch (err) {
-        console.error("Erro no pixel:", err);
-        res.status(500).send('Erro interno.');
     }
+
+    // Retorna imagem invisível
+    const imgBuffer = Buffer.from(
+        "R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==",
+        "base64"
+    );
+    res.writeHead(200, {
+        'Content-Type': 'image/gif',
+        'Content-Length': imgBuffer.length
+    });
+    res.end(imgBuffer);
 });
 
 

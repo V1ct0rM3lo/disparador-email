@@ -155,6 +155,7 @@ app.get('/pixel', async (req, res) => {
       if (dados[i].EMAIL && dados[i].EMAIL.trim().toLowerCase() === email.trim().toLowerCase()) {
         dados[i].VISUALIZADO = `Visualização registrada para ${email}`;
         atualizado = true;
+        console.log(`👀 Visualização registrada para ${email}`);
         break;
       }
     }
@@ -163,12 +164,12 @@ app.get('/pixel', async (req, res) => {
       const novaSheet = xlsx.utils.json_to_sheet(dados);
       workbook.Sheets[sheetName] = novaSheet;
       xlsx.writeFile(workbook, './dados.xlsx');
-      console.log(`👀 Visualização registrada para ${email}`);
     } else {
       console.log(`⚠️ Nenhuma correspondência encontrada para ${email}`);
     }
   }
 
+  // Resposta para o pixel
   const imgBuffer = Buffer.from(
     "R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==",
     "base64"

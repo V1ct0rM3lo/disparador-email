@@ -209,14 +209,11 @@ if (emailCol !== null && visualizadoCol !== null) {
     "base64"
   );
 
-  res.writeHead(200, {
-    'Content-Type': 'image/gif',
-    'Content-Length': imgBuffer.length
-  });
-  res.end(imgBuffer);
+res.writeHead(200, {
+  'Content-Type': 'image/gif',
+  'Content-Length': imgBuffer.length
 });
-
-
+res.end(imgBuffer);
 
 
 app.listen(PORT, () => {

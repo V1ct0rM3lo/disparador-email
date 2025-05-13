@@ -99,7 +99,8 @@ app.post('/enviar-emails', async (req, res) => {
 
         <p style="margin-top: 20px; font-size: 12px; color: #888;">Se você não solicitou este e-mail, apenas ignore esta mensagem.</p>
 
-        <img src="http://localhost:3000/pixel?email=${encodeURIComponent(contato.email)}" width="1" height="1" style="display:none;">
+      <img src="https://disparador-email.onrender.com/pixel?email=${encodeURIComponent(contato.email)}" width="1" height="1" style="display:none;">
+
       </div>
     </div>
     `
@@ -144,14 +145,23 @@ app.get('/pixel', async (req, res) => {
     if (email) {
         const workbook = xlsx.readFile('./dados.xlsx');
         const planilha = workbook.Sheets[workbook.SheetNames[0]];
-        const dados = xlsx.utils.sheet_to_json(planilha);
+        const dados = xlsx.utils.sheet_to_json(planilha, { defval: '' });
 
-        const index = dados.findIndex(d => d.email === email);
-        if (index !== -1) {
-            dados[index].VISUALIZADO = 'SIM';
+        let atualizado = false;
+
+        for (let i = 0; i < dados.length; i++) {
+            if (dados[i].EMAIL && dados[i].EMAIL.trim().toLowerCase() === email.trim().toLowerCase()) {
+                dados[i].VISUALIZADO = 'SIM';
+                atualizado = true;
+                break;
+            }
+        }
+
+        if (atualizado) {
             const novaPlanilha = xlsx.utils.json_to_sheet(dados);
             workbook.Sheets[workbook.SheetNames[0]] = novaPlanilha;
             xlsx.writeFile(workbook, './dados.xlsx');
+            console.log(`👀 Visualização registrada para ${email}`);
         }
     }
 
@@ -166,6 +176,7 @@ app.get('/pixel', async (req, res) => {
     });
     res.end(imgBuffer);
 });
+
 
 
 

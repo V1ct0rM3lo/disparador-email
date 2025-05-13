@@ -183,10 +183,10 @@ app.get('/pixel', async (req, res) => {
         }
     }
 
-    // Retorna a resposta com o status da visualização
+    // Primeiro, envie a resposta do status antes de enviar a imagem invisível
     res.send({ status: visualizadoStatus });
 
-    // Retorna imagem invisível
+    // Agora, retorne a imagem invisível após a resposta
     const imgBuffer = Buffer.from(
         "R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==",
         "base64"
@@ -197,7 +197,6 @@ app.get('/pixel', async (req, res) => {
     });
     res.end(imgBuffer);
 });
-
 
 
 

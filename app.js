@@ -145,15 +145,30 @@ app.post('/enviar-emails', async (req, res) => {
                 const codVal = sheet[codCell]?.v?.toString().trim();
                 const statusVal = sheet[statusCell]?.v?.toString().trim().toUpperCase();
 
-                if (
-                    emailVal === contato.email.toLowerCase().trim() &&
-                    codVal === contato.cod.toString() &&
-                    statusVal === 'NÃO ENVIADO'
-                ) {
-                    sheet[statusCell] = { t: 's', v: 'ENVIADO' };
-                    console.log(`📌 STATUS atualizado na linha ${R + 1} (${statusCell})`);
-                    break;
-                }
+              if (
+    emailVal === contato.email.toLowerCase().trim() &&
+    codVal === contato.cod.toString() &&
+    statusVal === 'NÃO ENVIADO'
+) {
+    sheet[statusCell] = { t: 's', v: 'ENVIADO' };
+
+    // Atualiza VISUALIZADO para "NÃO"
+    const visualizadoCol = Object.keys(sheet)
+        .filter(cell => cell.startsWith('A1') === false)
+        .find(cell => sheet[cell].v?.toString().toUpperCase() === 'VISUALIZADO');
+
+    if (visualizadoCol) {
+        const visualizadoColumnIndex = xlsx.utils.decode_cell(visualizadoCol).c;
+        const visualizadoCell = xlsx.utils.encode_cell({ r: R, c: visualizadoColumnIndex });
+        sheet[visualizadoCell] = { t: 's', v: 'NÃO' };
+    } else {
+        console.warn('⚠️ Coluna VISUALIZADO não encontrada!');
+    }
+
+    console.log(`📌 STATUS e VISUALIZADO atualizados na linha ${R + 1}`);
+    break;
+}
+
             }
 
         } catch (err) {

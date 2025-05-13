@@ -145,29 +145,30 @@ app.get('/pixel', async (req, res) => {
 
   if (email) {
     const workbook = xlsx.readFile('./dados.xlsx');
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
     const dados = xlsx.utils.sheet_to_json(sheet, { defval: '' });
 
     let atualizado = false;
 
     for (let i = 0; i < dados.length; i++) {
-  if (dados[i].EMAIL && dados[i].EMAIL.trim().toLowerCase() === email.trim().toLowerCase()) {
-  dados[i].VISUALIZADO = `Visualização registrada para ${email}`;
-  atualizado = true;
-  break;
-}
-
+      if (dados[i].EMAIL && dados[i].EMAIL.trim().toLowerCase() === email.trim().toLowerCase()) {
+        dados[i].VISUALIZADO = `Visualização registrada para ${email}`;
+        atualizado = true;
+        break;
+      }
     }
 
     if (atualizado) {
-      const novaPlanilha = xlsx.utils.json_to_sheet(dados);
-      workbook.Sheets[workbook.SheetNames[0]] = novaPlanilha;
+      const novaSheet = xlsx.utils.json_to_sheet(dados);
+      workbook.Sheets[sheetName] = novaSheet;
       xlsx.writeFile(workbook, './dados.xlsx');
       console.log(`👀 Visualização registrada para ${email}`);
+    } else {
+      console.log(`⚠️ Nenhuma correspondência encontrada para ${email}`);
     }
   }
 
-  // 🔁 Sempre responder com o pixel GIF (1x1 invisível)
   const imgBuffer = Buffer.from(
     "R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==",
     "base64"
@@ -179,7 +180,6 @@ app.get('/pixel', async (req, res) => {
   });
   res.end(imgBuffer);
 });
-
 
 
 

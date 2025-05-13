@@ -31,14 +31,16 @@ function getContatosAtivos() {
     const sheet = workbook.Sheets['Planilha1'];
     const data = xlsx.utils.sheet_to_json(sheet, { defval: '' });
 
-    return data.filter(d => d.SITUACAO === 'A' && d.EMAIL).map(d => ({
-        cod: d.COD_EMPRESA,
-        nome: d.NOME_EMPRESA,
-        cnpj: d.CNPJ,
-        email: d.EMAIL,
-        situacao: d.SITUACAO,
-        status: d.STATUS || 'NÃO ENVIADO'
-    }));
+ return data.filter(d => d.SITUACAO === 'A' && d.EMAIL).map(d => ({
+    cod: d.COD_EMPRESA,
+    nome: d.NOME_EMPRESA,
+    cnpj: d.CNPJ,
+    email: d.EMAIL,
+    situacao: d.SITUACAO,
+    status: d.STATUS || 'NÃO ENVIADO',
+    visualizado: d.VISUALIZADO || ''
+}));
+
 }
 
 // Retorna contatos ativos

@@ -9,10 +9,60 @@
         .loading {
             display: none;
         }
+
+            body {
+            background-color: #171717;
+            color: #e1e1e1;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+  
+
+        .card {
+            background-color: #383d47;
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+
+        .list-group-item {
+            background-color: transparent;
+            border: none;
+            color: #ffffff;
+            padding-left: 0;
+        }
+
+        .text-muted {
+            color: #ffffff !important;
+        }
+
+
+          h2 {
+            color: #00ffff;
+            font-size: 2rem;
+        }
     </style>
 </head>
 
-<body class="bg-light">
+<body>
+
+
+
+
     <div class="container my-5">
         <div class="card shadow">
             <div class="card-body">

@@ -144,19 +144,27 @@ app.get('/pixel', async (req, res) => {
     const email = req.query.email;
     if (email) {
         const workbook = xlsx.readFile('./dados.xlsx');
-        const planilha = workbook.Sheets[workbook.SheetNames[0]];
-        const dados = xlsx.utils.sheet_to_json(planilha, { defval: '' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const dados = xlsx.utils.sheet_to_json(sheet, { defval: '' });
 
         let atualizado = false;
 
-        // Itera sobre os dados e procura o e-mail para atualizar o status VISUALIZADO
+        // Verifique as colunas na primeira linha (cabeçalhos)
+        const headers = dados[0]; // pega o primeiro objeto, que deve ser a linha de cabeçalhos
+
+        // Encontre o índice da coluna VISUALIZADO
+        const visualizadoCol = Object.keys(headers).findIndex(header => header.toUpperCase() === 'VISUALIZADO');
+
+        if (visualizadoCol === -1) {
+            console.error('Coluna VISUALIZADO não encontrada!');
+            return res.status(500).send({ error: 'Coluna VISUALIZADO não encontrada.' });
+        }
+
+        // Percorra os dados e atualize a coluna VISUALIZADO para 'SIM' quando encontrar o e-mail
         for (let i = 0; i < dados.length; i++) {
             if (dados[i].EMAIL && dados[i].EMAIL.trim().toLowerCase() === email.trim().toLowerCase()) {
-                // Verifica se a coluna VISUALIZADO existe, senão cria ela
-                if (dados[i].VISUALIZADO !== 'SIM') {
-                    dados[i].VISUALIZADO = 'SIM'; // Altera para 'SIM' quando o e-mail for visualizado
-                    atualizado = true;
-                }
+                dados[i].VISUALIZADO = 'SIM'; // Altera para SIM
+                atualizado = true;
                 break;
             }
         }
@@ -169,7 +177,7 @@ app.get('/pixel', async (req, res) => {
         }
     }
 
-    // Retorna a imagem invisível (pixel de rastreamento)
+    // Retorna imagem invisível
     const imgBuffer = Buffer.from(
         "R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==",
         "base64"

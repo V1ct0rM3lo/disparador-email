@@ -141,62 +141,44 @@ app.post('/enviar-emails', async (req, res) => {
 
 
 app.get('/pixel', async (req, res) => {
-    const email = req.query.email;
-    let visualizadoStatus = 'Não encontrado';
+  const email = req.query.email;
 
-    if (email) {
-        const workbook = xlsx.readFile('./dados.xlsx');
-        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const dados = xlsx.utils.sheet_to_json(sheet, { defval: '' });
+  if (email) {
+    const workbook = xlsx.readFile('./dados.xlsx');
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const dados = xlsx.utils.sheet_to_json(sheet, { defval: '' });
 
-        let atualizado = false;
+    let atualizado = false;
 
-        // Verifique as colunas na primeira linha (cabeçalhos)
-        const headers = dados[0]; // pega o primeiro objeto, que deve ser a linha de cabeçalhos
-
-        // Encontre o índice da coluna VISUALIZADO
-        const visualizadoCol = Object.keys(headers).findIndex(header => header.toUpperCase() === 'VISUALIZADO');
-
-        if (visualizadoCol === -1) {
-            console.error('Coluna VISUALIZADO não encontrada!');
-            return res.status(500).send({ error: 'Coluna VISUALIZADO não encontrada.' });
-        }
-
-        // Percorra os dados e atualize a coluna VISUALIZADO para 'SIM' quando encontrar o e-mail
-        for (let i = 0; i < dados.length; i++) {
-            if (dados[i].EMAIL && dados[i].EMAIL.trim().toLowerCase() === email.trim().toLowerCase()) {
-                dados[i].VISUALIZADO = 'SIM'; // Altera para SIM
-                atualizado = true;
-                visualizadoStatus = 'Visualização registrada';
-                break;
-            }
-        }
-
-        if (atualizado) {
-            // Atualize a planilha com os novos dados
-            const novaPlanilha = xlsx.utils.json_to_sheet(dados);
-            workbook.Sheets[workbook.SheetNames[0]] = novaPlanilha;
-
-            // Escreva a planilha de volta no arquivo
-            xlsx.writeFile(workbook, './dados.xlsx');
-            console.log(`👀 Visualização registrada para ${email}`);
-        }
+    for (let i = 0; i < dados.length; i++) {
+      if (dados[i].EMAIL && dados[i].EMAIL.trim().toLowerCase() === email.trim().toLowerCase()) {
+        dados[i].VISUALIZADO = 'SIM';
+        atualizado = true;
+        break;
+      }
     }
 
-    // Primeiro, envie a resposta do status antes de enviar a imagem invisível
-    res.send({ status: visualizadoStatus });
+    if (atualizado) {
+      const novaPlanilha = xlsx.utils.json_to_sheet(dados);
+      workbook.Sheets[workbook.SheetNames[0]] = novaPlanilha;
+      xlsx.writeFile(workbook, './dados.xlsx');
+      console.log(`👀 Visualização registrada para ${email}`);
+    }
+  }
 
-    // Agora, retorne a imagem invisível após a resposta
-    const imgBuffer = Buffer.from(
-        "R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==",
-        "base64"
-    );
-    res.writeHead(200, {
-        'Content-Type': 'image/gif',
-        'Content-Length': imgBuffer.length
-    });
-    res.end(imgBuffer);
+  // 🔁 Sempre responder com o pixel GIF (1x1 invisível)
+  const imgBuffer = Buffer.from(
+    "R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==",
+    "base64"
+  );
+
+  res.writeHead(200, {
+    'Content-Type': 'image/gif',
+    'Content-Length': imgBuffer.length
+  });
+  res.end(imgBuffer);
 });
+
 
 
 

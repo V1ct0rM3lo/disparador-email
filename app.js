@@ -164,7 +164,7 @@ app.post('/enviar-emails', async (req, res) => {
     } else {
         console.warn('⚠️ Coluna VISUALIZADO não encontrada!');
     }
-
+              }
     console.log(`📌 STATUS e VISUALIZADO atualizados na linha ${R + 1}`);
     break;
 }

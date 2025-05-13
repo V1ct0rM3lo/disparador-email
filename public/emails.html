@@ -119,7 +119,8 @@
                         <td>${c.email}</td>
                         <td>${c.situacao}</td>
                         <td class="status" data-status="${status}">${c.status || 'Não enviado'}</td>
-                        <td>${(c.visualizado || '').toString().toUpperCase() === 'SIM' ? 'SIM' : 'NÃO'}</td>
+                        <td>${(c.visualizado || '').toString().toUpperCase() === 'SIM' ? `Visualização registrada para ${c.email}` : 'NÃO'}</td>
+
 
                     `;
                     tbody.appendChild(tr);

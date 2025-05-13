@@ -112,10 +112,8 @@
     tr.dataset.codEmpresa = c.cod;
 
     // Adicionando a lógica para exibir a mensagem de visualização
-    let visualizadoMessage = '';
-    if (c.visualizado) {
-        visualizadoMessage = `Visualização registrada para ${c.email}`;
-    }
+ let visualizadoMessage = c.visualizado ? 'Sim' : '—';
+
 
     tr.innerHTML = `
         <td><input type="checkbox" name="selecionado" value='${JSON.stringify(c)}'></td>

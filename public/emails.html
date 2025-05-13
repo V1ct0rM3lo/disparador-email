@@ -104,28 +104,32 @@
 
                 let pendentes = 0;
 
-                contatos.forEach(c => {
-                    const status = c.status?.toLowerCase() || 'não enviado';
-                    if (status === 'não enviado') pendentes++;
+            contatos.forEach(c => {
+    const status = c.status?.toLowerCase() || 'não enviado';
+    if (status === 'não enviado') pendentes++;
 
-                    const tr = document.createElement('tr');
-                    tr.dataset.codEmpresa = c.cod;
+    const tr = document.createElement('tr');
+    tr.dataset.codEmpresa = c.cod;
 
-                    tr.innerHTML = `
-                        <td><input type="checkbox" name="selecionado" value='${JSON.stringify(c)}'></td>
-                        <td>${c.cod}</td>
-                        <td>${c.nome}</td>
-                        <td>${c.cnpj}</td>
-                        <td>${c.email}</td>
-                        <td>${c.situacao}</td>
-                        <td class="status" data-status="${status}">${c.status || 'Não enviado'}</td>
-                        <td>${c.visualizado ? `Visualização registrada para ${c.email}` : ''}</td>
+    // Adicionando a lógica para exibir a mensagem de visualização
+    let visualizadoMessage = '';
+    if (c.visualizado) {
+        visualizadoMessage = `Visualização registrada para ${c.email}`;
+    }
 
+    tr.innerHTML = `
+        <td><input type="checkbox" name="selecionado" value='${JSON.stringify(c)}'></td>
+        <td>${c.cod}</td>
+        <td>${c.nome}</td>
+        <td>${c.cnpj}</td>
+        <td>${c.email}</td>
+        <td>${c.situacao}</td>
+        <td class="status" data-status="${status}">${c.status || 'Não enviado'}</td>
+        <td>${visualizadoMessage}</td>
+    `;
+    tbody.appendChild(tr);
+});
 
-
-                    `;
-                    tbody.appendChild(tr);
-                });
 
                 document.getElementById('contador').textContent = `Pendentes para envio: ${pendentes}`;
             } catch (err) {

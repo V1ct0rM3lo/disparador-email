@@ -31,17 +31,42 @@ function getContatosAtivos() {
     const sheet = workbook.Sheets['Planilha1'];
     const data = xlsx.utils.sheet_to_json(sheet, { defval: '' });
 
- return data.filter(d => d.SITUACAO === 'A' && d.EMAIL).map(d => ({
-    cod: d.COD_EMPRESA,
-    nome: d.NOME_EMPRESA,
-    cnpj: d.CNPJ,
-    email: d.EMAIL,
-    situacao: d.SITUACAO,
-    status: d.STATUS || 'NÃO ENVIADO',
-    visualizado: d.VISUALIZADO || ''
-}));
+    let atualizou = false;
 
+    const contatos = data.filter(d => d.SITUACAO === 'A' && d.EMAIL).map(d => {
+        // Preenche STATUS vazio
+        if (!d.STATUS || d.STATUS.toString().trim() === '') {
+            d.STATUS = 'NÃO ENVIADO';
+            atualizou = true;
+        }
+
+        // Preenche VISUALIZADO vazio
+        if (!d.VISUALIZADO || d.VISUALIZADO.toString().trim() === '') {
+            d.VISUALIZADO = 'NÃO VISUALIZADO';
+            atualizou = true;
+        }
+
+        return {
+            cod: d.COD_EMPRESA,
+            nome: d.NOME_EMPRESA,
+            cnpj: d.CNPJ,
+            email: d.EMAIL,
+            situacao: d.SITUACAO,
+            status: d.STATUS,
+            visualizado: d.VISUALIZADO
+        };
+    });
+
+    if (atualizou) {
+        const novaSheet = xlsx.utils.json_to_sheet(data);
+        workbook.Sheets['Planilha1'] = novaSheet;
+        xlsx.writeFile(workbook, './dados.xlsx');
+        console.log('📁 Planilha atualizada: STATUS e VISUALIZADO preenchidos automaticamente onde estavam vazios.');
+    }
+
+    return contatos;
 }
+
 
 // Retorna contatos ativos
 app.get('/contatos', (req, res) => {

@@ -149,10 +149,14 @@ app.get('/pixel', async (req, res) => {
 
         let atualizado = false;
 
+        // Itera sobre os dados e procura o e-mail para atualizar o status VISUALIZADO
         for (let i = 0; i < dados.length; i++) {
             if (dados[i].EMAIL && dados[i].EMAIL.trim().toLowerCase() === email.trim().toLowerCase()) {
-                dados[i].VISUALIZADO = 'SIM';
-                atualizado = true;
+                // Verifica se a coluna VISUALIZADO existe, senão cria ela
+                if (dados[i].VISUALIZADO !== 'SIM') {
+                    dados[i].VISUALIZADO = 'SIM'; // Altera para 'SIM' quando o e-mail for visualizado
+                    atualizado = true;
+                }
                 break;
             }
         }
@@ -165,7 +169,7 @@ app.get('/pixel', async (req, res) => {
         }
     }
 
-    // Retorna imagem invisível
+    // Retorna a imagem invisível (pixel de rastreamento)
     const imgBuffer = Buffer.from(
         "R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==",
         "base64"

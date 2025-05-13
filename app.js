@@ -121,14 +121,14 @@ app.post('/enviar-emails', async (req, res) => {
                 const statusVal = sheet[statusCell]?.v?.toString().trim().toUpperCase();
 
                 if (
-                    emailVal === contato.email.toLowerCase().trim() &&
-                    codVal === contato.cod.toString() &&
-                    statusVal === 'NÃO ENVIADO'
-                ) {
-                    sheet[statusCell] = { t: 's', v: 'ENVIADO' };
-                    console.log(`📌 STATUS atualizado na linha ${R + 1} (${statusCell})`);
-                    break;
-                }
+    emailVal === contato.email.toLowerCase().trim() &&
+    codVal === contato.cod.toString()
+) {
+    sheet[statusCell] = { t: 's', v: 'ENVIADO' };
+    console.log(`📌 STATUS atualizado na linha ${R + 1} (${statusCell})`);
+    break;
+}
+
             }
 
         } catch (err) {

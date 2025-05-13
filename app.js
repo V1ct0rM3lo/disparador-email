@@ -187,10 +187,21 @@ app.get('/pixel', async (req, res) => {
 
 app.post('/resetar-status', (req, res) => {
   try {
-    contatos.forEach(contato => {
-      contato.status = "Não enviado";
-      contato.visualizado = "";
-    });
+    const workbook = xlsx.readFile('./dados.xlsx');
+    const sheet = workbook.Sheets['Planilha1'];
+    const data = xlsx.utils.sheet_to_json(sheet, { defval: '' });
+
+    // Reseta os campos de STATUS e VISUALIZADO
+    for (let i = 0; i < data.length; i++) {
+      if (data[i].SITUACAO === 'A' && data[i].EMAIL) {
+        data[i].STATUS = 'NÃO ENVIADO';
+        data[i].VISUALIZADO = '';
+      }
+    }
+
+    const novaSheet = xlsx.utils.json_to_sheet(data);
+    workbook.Sheets['Planilha1'] = novaSheet;
+    xlsx.writeFile(workbook, './dados.xlsx');
 
     res.json({ ok: true, msg: "Status resetado com sucesso." });
   } catch (err) {
@@ -198,6 +209,7 @@ app.post('/resetar-status', (req, res) => {
     res.status(500).json({ error: "Erro ao resetar status." });
   }
 });
+
 
 
 

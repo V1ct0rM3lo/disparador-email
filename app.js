@@ -142,6 +142,8 @@ app.post('/enviar-emails', async (req, res) => {
 
 app.get('/pixel', async (req, res) => {
     const email = req.query.email;
+    let visualizadoStatus = 'Não encontrado';
+
     if (email) {
         const workbook = xlsx.readFile('./dados.xlsx');
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -165,17 +167,24 @@ app.get('/pixel', async (req, res) => {
             if (dados[i].EMAIL && dados[i].EMAIL.trim().toLowerCase() === email.trim().toLowerCase()) {
                 dados[i].VISUALIZADO = 'SIM'; // Altera para SIM
                 atualizado = true;
+                visualizadoStatus = 'Visualização registrada';
                 break;
             }
         }
 
         if (atualizado) {
+            // Atualize a planilha com os novos dados
             const novaPlanilha = xlsx.utils.json_to_sheet(dados);
             workbook.Sheets[workbook.SheetNames[0]] = novaPlanilha;
+
+            // Escreva a planilha de volta no arquivo
             xlsx.writeFile(workbook, './dados.xlsx');
             console.log(`👀 Visualização registrada para ${email}`);
         }
     }
+
+    // Retorna a resposta com o status da visualização
+    res.send({ status: visualizadoStatus });
 
     // Retorna imagem invisível
     const imgBuffer = Buffer.from(
@@ -188,6 +197,7 @@ app.get('/pixel', async (req, res) => {
     });
     res.end(imgBuffer);
 });
+
 
 
 

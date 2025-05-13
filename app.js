@@ -151,11 +151,12 @@ app.get('/pixel', async (req, res) => {
     let atualizado = false;
 
     for (let i = 0; i < dados.length; i++) {
-      if (dados[i].EMAIL && dados[i].EMAIL.trim().toLowerCase() === email.trim().toLowerCase()) {
-        dados[i].VISUALIZADO = 'SIM';
-        atualizado = true;
-        break;
-      }
+  if (dados[i].EMAIL && dados[i].EMAIL.trim().toLowerCase() === email.trim().toLowerCase()) {
+  dados[i].VISUALIZADO = `Visualização registrada para ${email}`;
+  atualizado = true;
+  break;
+}
+
     }
 
     if (atualizado) {

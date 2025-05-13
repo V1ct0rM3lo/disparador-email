@@ -31,15 +31,15 @@ function getContatosAtivos() {
     const sheet = workbook.Sheets['Planilha1'];
     const data = xlsx.utils.sheet_to_json(sheet, { defval: '' });
 
-    return data.filter(d => d.SITUACAO === 'A' && d.EMAIL).map(d => ({
-        cod: d.COD_EMPRESA,
-        nome: d.NOME_EMPRESA,
-        cnpj: d.CNPJ,
-        email: d.EMAIL,
-        situacao: d.SITUACAO,
-        status: d.STATUS || 'NÃO ENVIADO',
-        visualizado: d.VISUALIZADO || ''
-    }));
+ return data.filter(d => d.SITUACAO === 'A' && d.EMAIL).map(d => ({
+    cod: d.COD_EMPRESA,
+    nome: d.NOME_EMPRESA,
+    cnpj: d.CNPJ,
+    email: d.EMAIL,
+    situacao: d.SITUACAO,
+    status: d.STATUS || 'NÃO ENVIADO',
+    visualizado: d.VISUALIZADO || ''
+}));
 
 }
 
@@ -126,21 +126,7 @@ app.post('/enviar-emails', async (req, res) => {
                     statusVal === 'NÃO ENVIADO'
                 ) {
                     sheet[statusCell] = { t: 's', v: 'ENVIADO' };
-
-                    // Atualiza VISUALIZADO para "NÃO"
-                    const visualizadoCol = Object.keys(sheet)
-                        .filter(cell => cell.startsWith('A1') === false)
-                        .find(cell => sheet[cell].v?.toString().toUpperCase() === 'VISUALIZADO');
-
-                    if (visualizadoCol) {
-                        const visualizadoColumnIndex = xlsx.utils.decode_cell(visualizadoCol).c;
-                        const visualizadoCell = xlsx.utils.encode_cell({ r: R, c: visualizadoColumnIndex });
-                        sheet[visualizadoCell] = { t: 's', v: 'NÃO' };
-                    } else {
-                        console.warn('⚠️ Coluna VISUALIZADO não encontrada!');
-                    }
-
-                    console.log(`📌 STATUS e VISUALIZADO atualizados na linha ${R + 1}`);
+                    console.log(`📌 STATUS atualizado na linha ${R + 1} (${statusCell})`);
                     break;
                 }
             }
@@ -157,45 +143,45 @@ app.post('/enviar-emails', async (req, res) => {
 
 
 app.get('/pixel', async (req, res) => {
-    const email = req.query.email;
+  const email = req.query.email;
 
-    if (email) {
-        const workbook = xlsx.readFile('./dados.xlsx');
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        const dados = xlsx.utils.sheet_to_json(sheet, { defval: '' });
+  if (email) {
+    const workbook = xlsx.readFile('./dados.xlsx');
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const dados = xlsx.utils.sheet_to_json(sheet, { defval: '' });
 
-        let atualizado = false;
+    let atualizado = false;
 
-        for (let i = 0; i < dados.length; i++) {
-            if (dados[i].EMAIL && dados[i].EMAIL.trim().toLowerCase() === email.trim().toLowerCase()) {
-                dados[i].VISUALIZADO = `Visualização registrada para ${email}`;
-                atualizado = true;
-                console.log(`👀 Visualização registrada para ${email}`);
-                break;
-            }
-        }
-
-        if (atualizado) {
-            const novaSheet = xlsx.utils.json_to_sheet(dados);
-            workbook.Sheets[sheetName] = novaSheet;
-            xlsx.writeFile(workbook, './dados.xlsx');
-        } else {
-            console.log(`⚠️ Nenhuma correspondência encontrada para ${email}`);
-        }
+    for (let i = 0; i < dados.length; i++) {
+      if (dados[i].EMAIL && dados[i].EMAIL.trim().toLowerCase() === email.trim().toLowerCase()) {
+        dados[i].VISUALIZADO = `Visualização registrada para ${email}`;
+        atualizado = true;
+        console.log(`👀 Visualização registrada para ${email}`);
+        break;
+      }
     }
 
-    // Resposta para o pixel
-    const imgBuffer = Buffer.from(
-        "R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==",
-        "base64"
-    );
+    if (atualizado) {
+      const novaSheet = xlsx.utils.json_to_sheet(dados);
+      workbook.Sheets[sheetName] = novaSheet;
+      xlsx.writeFile(workbook, './dados.xlsx');
+    } else {
+      console.log(`⚠️ Nenhuma correspondência encontrada para ${email}`);
+    }
+  }
 
-    res.writeHead(200, {
-        'Content-Type': 'image/gif',
-        'Content-Length': imgBuffer.length
-    });
-    res.end(imgBuffer);
+  // Resposta para o pixel
+  const imgBuffer = Buffer.from(
+    "R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==",
+    "base64"
+  );
+
+  res.writeHead(200, {
+    'Content-Type': 'image/gif',
+    'Content-Length': imgBuffer.length
+  });
+  res.end(imgBuffer);
 });
 
 

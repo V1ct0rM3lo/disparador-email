@@ -83,82 +83,63 @@ app.post('/enviar-emails', async (req, res) => {
     const range = xlsx.utils.decode_range(sheet['!ref']);
 
     let statusCol = null, emailCol = null, codCol = null;
+let visualizadoCol = null;
 
-    // Localiza colunas
-    for (let C = range.s.c; C <= range.e.c; ++C) {
-        const cell = sheet[xlsx.utils.encode_cell({ r: 0, c: C })];
-        if (cell && cell.v) {
-            const header = cell.v.toString().toUpperCase();
-            if (header === 'STATUS') statusCol = C;
-            if (header === 'EMAIL') emailCol = C;
-            if (header === 'COD_EMPRESA') codCol = C;
-        }
+// Localiza também a coluna VISUALIZADO
+for (let C = range.s.c; C <= range.e.c; ++C) {
+    const cell = sheet[xlsx.utils.encode_cell({ r: 0, c: C })];
+    if (cell && cell.v) {
+        const header = cell.v.toString().toUpperCase();
+        if (header === 'STATUS') statusCol = C;
+        if (header === 'EMAIL') emailCol = C;
+        if (header === 'COD_EMPRESA') codCol = C;
+        if (header === 'VISUALIZADO') visualizadoCol = C;
     }
+}
 
-    if (statusCol === null || emailCol === null || codCol === null) {
-        return res.status(500).send({ error: 'Colunas STATUS, EMAIL ou COD_EMPRESA não encontradas.' });
-    }
+// Verifica se todas foram encontradas
+if (statusCol === null || emailCol === null || codCol === null || visualizadoCol === null) {
+    return res.status(500).send({ error: 'Colunas obrigatórias não encontradas.' });
+}
 
-    for (const contato of selecionados) {
-        try {
-            await transporter.sendMail({
-                from: `"Disparador" <${process.env.EMAIL_USER}>`,
-                to: contato.email,
-                subject: '🔔 Notificação do Sistema - Disparo Automático',
-                html: `
-    <div style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
-      <div style="background-color: #1e1e2f; color: #ffffff; padding: 15px; border-radius: 8px 8px 0 0;">
-        <h2 style="margin: 0;">🚀 Sistema de Disparo Automático</h2>
-      </div>
+// Atualiza STATUS e VISUALIZADO
+for (const contato of selecionados) {
+    try {
+        await transporter.sendMail({
+            from: `"Disparador" <${process.env.EMAIL_USER}>`,
+            to: contato.email,
+            subject: '🔔 Notificação do Sistema - Disparo Automático',
+            html: `...` // sua estrutura de e-mail permanece
+        });
 
-      <div style="background-color: #ffffff; padding: 20px; border-radius: 0 0 8px 8px;">
-        <p>Olá, tudo certo? 🤖</p>
+        console.log(`✅ E-mail enviado para ${contato.email}`);
 
-        <p>Este e-mail foi enviado automaticamente pelo nosso sistema Node.js como parte de um teste de funcionalidade.</p>
+        for (let R = 1; R <= range.e.r; ++R) {
+            const emailCell = xlsx.utils.encode_cell({ r: R, c: emailCol });
+            const codCell = xlsx.utils.encode_cell({ r: R, c: codCol });
+            const statusCell = xlsx.utils.encode_cell({ r: R, c: statusCol });
+            const visualizadoCell = xlsx.utils.encode_cell({ r: R, c: visualizadoCol });
 
-        <p>Você pode acessar nosso painel clicando no botão abaixo:</p>
+            const emailVal = sheet[emailCell]?.v?.toString().trim().toLowerCase();
+            const codVal = sheet[codCell]?.v?.toString().trim();
+            const statusVal = sheet[statusCell]?.v?.toString().trim().toUpperCase();
 
-        <a href="https://seusite.com/painel" 
-           style="display: inline-block; padding: 12px 24px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
-          🔗 Acessar Painel
-        </a>
-
-        <p style="margin-top: 20px; font-size: 12px; color: #888;">Se você não solicitou este e-mail, apenas ignore esta mensagem.</p>
-
-      <img src="https://disparador-email.onrender.com/pixel?email=${encodeURIComponent(contato.email)}" width="1" height="1" style="display:none;">
-
-      </div>
-    </div>
-    `
-            });
-
-            console.log(`✅ E-mail enviado para ${contato.email}`);
-
-            // Atualiza status na planilha
-            for (let R = 1; R <= range.e.r; ++R) {
-                const emailCell = xlsx.utils.encode_cell({ r: R, c: emailCol });
-                const codCell = xlsx.utils.encode_cell({ r: R, c: codCol });
-                const statusCell = xlsx.utils.encode_cell({ r: R, c: statusCol });
-
-                const emailVal = sheet[emailCell]?.v?.toString().trim().toLowerCase();
-                const codVal = sheet[codCell]?.v?.toString().trim();
-                const statusVal = sheet[statusCell]?.v?.toString().trim().toUpperCase();
-
-                if (
-                    emailVal === contato.email.toLowerCase().trim() &&
-                    codVal === contato.cod.toString() &&
-                    statusVal === 'NÃO ENVIADO'
-                ) {
-                    sheet[statusCell] = { t: 's', v: 'ENVIADO' };
-                    console.log(`📌 STATUS atualizado na linha ${R + 1} (${statusCell})`);
-                    break;
-                }
+            if (
+                emailVal === contato.email.toLowerCase().trim() &&
+                codVal === contato.cod.toString()
+            ) {
+                sheet[statusCell] = { t: 's', v: 'ENVIADO' };
+                sheet[visualizadoCell] = { t: 's', v: 'NÃO VISUALIZADO' };
+                console.log(`📌 STATUS e VISUALIZADO atualizados na linha ${R + 1}`);
+                break;
             }
-
-        } catch (err) {
-            console.error(`❌ Erro ao enviar e-mail: ${err.message}`);
         }
+
+    } catch (err) {
+        console.error(`❌ Erro ao enviar e-mail: ${err.message}`);
     }
+}
+
 
     xlsx.writeFile(workbook, './dados.xlsx');
     console.log('✅ Planilha atualizada com sucesso.');

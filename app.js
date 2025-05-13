@@ -168,13 +168,40 @@ app.get('/pixel', async (req, res) => {
     }
 
     if (atualizado) {
-      const novaSheet = xlsx.utils.json_to_sheet(dados);
-      workbook.Sheets[sheetName] = novaSheet;
-      xlsx.writeFile(workbook, './dados.xlsx');
-    } else {
-      console.log(`⚠️ Nenhuma correspondência encontrada para ${email}`);
+   const range = xlsx.utils.decode_range(sheet['!ref']);
+let emailCol = null;
+let visualizadoCol = null;
+
+// Acha os índices das colunas
+for (let C = range.s.c; C <= range.e.c; ++C) {
+  const header = sheet[xlsx.utils.encode_cell({ r: 0, c: C })];
+  if (header && header.v) {
+    const colName = header.v.toString().toUpperCase();
+    if (colName === 'EMAIL') emailCol = C;
+    if (colName === 'VISUALIZADO') visualizadoCol = C;
+  }
+}
+
+if (emailCol !== null && visualizadoCol !== null) {
+  for (let R = 1; R <= range.e.r; ++R) {
+    const emailCell = xlsx.utils.encode_cell({ r: R, c: emailCol });
+    const visualizadoCell = xlsx.utils.encode_cell({ r: R, c: visualizadoCol });
+
+    const emailVal = sheet[emailCell]?.v?.toString().trim().toLowerCase();
+
+    if (emailVal === email.trim().toLowerCase()) {
+      sheet[visualizadoCell] = {
+        t: 's',
+        v: `Visualização registrada para ${email}`
+      };
+      console.log(`👀 Visualização registrada diretamente na célula ${visualizadoCell}`);
+      break;
     }
   }
+
+  xlsx.writeFile(workbook, './dados.xlsx');
+}
+
 
   // Resposta para o pixel
   const imgBuffer = Buffer.from(

@@ -209,13 +209,17 @@ if (emailCol !== null && visualizadoCol !== null) {
     "base64"
   );
 
-res.writeHead(200, {
-  'Content-Type': 'image/gif',
-  'Content-Length': imgBuffer.length
-});
-res.end(imgBuffer);
+    // ...dentro da rota /pixel, no final:
+    res.writeHead(200, {
+      'Content-Type': 'image/gif',
+      'Content-Length': imgBuffer.length
+    });
+    res.end(imgBuffer);
+  }
+}); // <== FECHA A ROTA /pixel AQUI
 
-
+// Agora sim, fora da rota /pixel
 app.listen(PORT, () => {
     console.log(`🚀 Servidor rodando em: http://localhost:${PORT}`);
 });
+

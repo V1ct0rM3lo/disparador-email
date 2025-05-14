@@ -10,26 +10,12 @@
             display: none;
         }
 
-            body {
+        body {
             background-color: #171717;
             color: #e1e1e1;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             min-height: 100vh;
         }
-
-        @keyframes slideIn {
-            from {
-                transform: translateY(-20px);
-                opacity: 0;
-            }
-
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-  
 
         .card {
             background-color: #383d47;
@@ -50,8 +36,13 @@
             color: #ffffff !important;
         }
 
+        .icon-tech {
+            color: #00ffff;
+            font-size: 2rem;
+        }
 
-          h2 {
+
+        h2 {
             color: #00ffff;
             font-size: 2rem;
         }
@@ -59,8 +50,6 @@
 </head>
 
 <body>
-
-
 
 
     <div class="container my-5">
@@ -194,6 +183,54 @@
                 alert(`Erro: ${err.message}`);
             }
         });
+
+        document.addEventListener('click', async function (e) {
+            if (!e.target.classList.contains('badge')) return;
+
+            const badge = e.target;
+            const tr = badge.closest('tr');
+            const codEmpresa = tr.dataset.codEmpresa;
+
+            // Só age se o status for "NÃO ENVIADO"
+            if (badge.textContent.trim().toUpperCase() !== 'NÃO ENVIADO') return;
+
+            const novoStatus = 'FINALIZADO';
+
+            // Atualiza visualmente
+            badge.textContent = novoStatus;
+            badge.classList.remove('bg-danger');
+            badge.classList.add('bg-secondary');
+
+            // Envia pro servidor
+            try {
+                const res = await fetch('/atualizar-status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cod: codEmpresa, status: novoStatus })
+                });
+
+                if (!res.ok) {
+                    throw new Error(`Erro ${res.status}`);
+                }
+            } catch (err) {
+                alert('Erro ao salvar no Excel: ' + err.message);
+                // Reverte visualmente se der erro
+                badge.textContent = 'NÃO ENVIADO';
+                badge.classList.remove('bg-secondary');
+                badge.classList.add('bg-danger');
+            }
+        });
+
+        async function logout() {
+            await fetch('/logout', {
+                method: 'POST',
+                credentials: 'include'
+            });
+
+            window.location.href = '/login.html';
+        }
+
+
 
         carregarContatos();
     </script>

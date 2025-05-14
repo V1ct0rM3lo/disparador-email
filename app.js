@@ -1,7 +1,4 @@
 const express = require('express');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const { Usuario } = require('./models'); // Importa o modelo Usuario
 const path = require('path');
 const cors = require('cors');
 const session = require('express-session');

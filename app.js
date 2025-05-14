@@ -1,3 +1,22 @@
+const express = require('express');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const { Usuario } = require('./models'); // Importa o modelo Usuario
+const path = require('path');
+const cors = require('cors');
+const session = require('express-session');
+const { Op } = require('sequelize');
+const xlsx = require('xlsx');
+const fs = require('fs');
+
+// Inicializa o Express
+const app = express();
+
+// Configurações de middleware
+app.use(cors());  // Adiciona o middleware CORS
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public'))); // Agora vem após a inicialização do app
 
 require('dotenv').config();
 const nodemailer = require('nodemailer');

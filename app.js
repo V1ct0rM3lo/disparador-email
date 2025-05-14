@@ -248,3 +248,9 @@ app.post('/atualizar-status', (req, res) => {
     res.status(500).json({ error: 'Erro ao salvar no Excel.' });
   }
 });
+
+
+// Inicializa o servidor
+app.listen(3000, () => {
+  console.log('Servidor rodando na porta 3000');
+});

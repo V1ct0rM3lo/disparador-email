@@ -1,239 +1,131 @@
-<!DOCTYPE html>
-<html lang="pt-br">
+<!-- Substitua apenas o trecho do JS dentro de <script> abaixo -->
+<script>
+    async function carregarContatos() {
+        try {
+            const res = await fetch('/contatos');
+            if (!res.ok) throw new Error("Erro ao carregar contatos.");
+            const contatos = await res.json();
 
-<head>
-    <meta charset="UTF-8">
-    <title>Disparador de E-mails</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        .loading {
-            display: none;
-        }
+            const tbody = document.getElementById('tabela');
+            tbody.innerHTML = '';
 
-        body {
-            background-color: #171717;
-            color: #e1e1e1;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            min-height: 100vh;
-        }
+            let pendentes = 0;
 
-        .card {
-            background-color: #383d47;
-            border: none;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            padding: 30px;
-        }
+            contatos.forEach(c => {
+                const status = c.status?.toLowerCase() || 'não enviado';
+                if (status === 'não enviado') pendentes++;
 
-        .list-group-item {
-            background-color: transparent;
-            border: none;
-            color: #ffffff;
-            padding-left: 0;
-        }
+                const tr = document.createElement('tr');
+                tr.dataset.codEmpresa = c.cod;
 
-        .text-muted {
-            color: #ffffff !important;
-        }
+                let visualizadoMessage = c.visualizado ? 'Sim' : '—';
 
-        .icon-tech {
-            color: #00ffff;
-            font-size: 2rem;
-        }
+                let badgeClass = {
+                    'enviado': 'success',
+                    'pendente': 'warning',
+                    'finalizado': 'secondary',
+                    'não enviado': 'danger'
+                }[status] || 'dark';
 
+                const statusLabel = `<span class="badge bg-${badgeClass} text-uppercase">${c.status || 'Não enviado'}</span>`;
+                const botaoFinalizar = (status === 'não enviado' || status === 'enviado')
+                    ? `<button class="btn btn-sm btn-outline-light btn-finalizar" data-cod="${c.cod}">Finalizar</button>`
+                    : '';
 
-        h2 {
-            color: #00ffff;
-            font-size: 2rem;
-        }
-    </style>
-</head>
+                tr.innerHTML = `
+                    <td><input class="form-check-input" type="checkbox" name="selecionado" value='${JSON.stringify(c)}'></td>
+                    <td>${c.cod}</td>
+                    <td>${c.nome}</td>
+                    <td>${c.cnpj}</td>
+                    <td>${c.email}</td>
+                    <td>${c.situacao}</td>
+                    <td>${statusLabel} ${botaoFinalizar}</td>
+                    <td>${visualizadoMessage}</td>
+                `;
 
-<body>
-
-
-    <div class="container my-5">
-        <div class="card shadow">
-            <div class="card-body">
-                <h2 class="mb-3">Disparador de E-mails</h2>
-
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div id="contador" class="fw-bold text-primary">Carregando...</div>
-                    <button type="button" class="btn btn-warning btn-sm" id="resetarStatus">
-                        Resetar todos para <strong>NÃO ENVIADO</strong>
-                    </button>
-                </div>
-
-                <form id="formEmails">
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-hover align-middle">
-                            <thead class="table-light">
-                                <tr>
-                                    <th scope="col">Selecionar</th>
-                                    <th scope="col">Código</th>
-                                    <th scope="col">Empresa</th>
-                                    <th scope="col">CNPJ</th>
-                                    <th scope="col">E-mail</th>
-                                    <th scope="col">Situação</th>
-                                    <th scope="col">Status</th>
-                                    <th scope="col">Visualizado</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tabela"></tbody>
-                        </table>
-                    </div>
-
-                    <div class="d-flex align-items-center gap-3 mt-3">
-                        <button type="submit" class="btn btn-primary">Enviar E-mails Selecionados</button>
-                        <div class="loading text-primary fw-bold">
-                            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-                            Enviando e-mails, aguarde...
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        async function carregarContatos() {
-            try {
-                const res = await fetch('/contatos');
-                if (!res.ok) throw new Error("Erro ao carregar contatos.");
-                const contatos = await res.json();
-
-                const tbody = document.getElementById('tabela');
-                tbody.innerHTML = '';
-
-                let pendentes = 0;
-
-                contatos.forEach(c => {
-                    const status = c.status?.toLowerCase() || 'não enviado';
-                    if (status === 'não enviado') pendentes++;
-
-                    const tr = document.createElement('tr');
-                    tr.dataset.codEmpresa = c.cod;
-
-                    let visualizadoMessage = c.visualizado ? 'Sim' : '—';
-
-                    let badgeClass = {
-                        'enviado': 'success',
-                        'pendente': 'warning',
-                        'finalizado': 'secondary',
-                        'não enviado': 'danger'
-                    }[status] || 'dark';
-
-                    tr.innerHTML = `
-                        <td><input class="form-check-input" type="checkbox" name="selecionado" value='${JSON.stringify(c)}'></td>
-                        <td>${c.cod}</td>
-                        <td>${c.nome}</td>
-                        <td>${c.cnpj}</td>
-                        <td>${c.email}</td>
-                        <td>${c.situacao}</td>
-                        <td><span class="badge bg-${badgeClass} text-uppercase">${c.status || 'Não enviado'}</span></td>
-                        <td>${visualizadoMessage}</td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-
-                document.getElementById('contador').textContent = `Pendentes para envio: ${pendentes}`;
-            } catch (err) {
-                alert(`Erro: ${err.message}`);
-                document.getElementById('contador').textContent = 'Erro ao carregar.';
-            }
-        }
-
-        document.getElementById('formEmails').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const checkboxes = document.querySelectorAll('input[name="selecionado"]:checked');
-            const selecionados = Array.from(checkboxes).map(cb => JSON.parse(cb.value));
-            if (selecionados.length === 0) return alert("Selecione pelo menos um e-mail.");
-
-            const loading = document.querySelector('.loading');
-            loading.style.display = 'inline-flex';
-
-            try {
-                const res = await fetch('/enviar-emails', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ emails: selecionados })
-                });
-
-                if (!res.ok) throw new Error("Erro ao enviar e-mails.");
-
-                const result = await res.json();
-                alert(`Foram enviados ${result.enviados} e-mails com sucesso.`);
-                carregarContatos();
-            } catch (err) {
-                alert(`Erro: ${err.message}`);
-            } finally {
-                loading.style.display = 'none';
-            }
-        });
-
-        document.getElementById('resetarStatus').addEventListener('click', async () => {
-            if (!confirm("Tem certeza que deseja resetar todos os status para 'NÃO ENVIADO'?")) return;
-
-            try {
-                const res = await fetch('/resetar-status', { method: 'POST' });
-                if (!res.ok) throw new Error("Erro ao resetar status.");
-                alert("Todos os status foram resetados com sucesso.");
-                carregarContatos();
-            } catch (err) {
-                alert(`Erro: ${err.message}`);
-            }
-        });
-
-        document.addEventListener('click', async function (e) {
-            if (!e.target.classList.contains('badge')) return;
-
-            const badge = e.target;
-            const tr = badge.closest('tr');
-            const codEmpresa = tr.dataset.codEmpresa;
-
-            // Só age se o status for "NÃO ENVIADO"
-            if (badge.textContent.trim().toUpperCase() !== 'NÃO ENVIADO') return;
-
-            const novoStatus = 'FINALIZADO';
-
-            // Atualiza visualmente
-            badge.textContent = novoStatus;
-            badge.classList.remove('bg-danger');
-            badge.classList.add('bg-secondary');
-
-            // Envia pro servidor
-            try {
-                const res = await fetch('/atualizar-status', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ cod: codEmpresa, status: novoStatus })
-                });
-
-                if (!res.ok) {
-                    throw new Error(`Erro ${res.status}`);
-                }
-            } catch (err) {
-                alert('Erro ao salvar no Excel: ' + err.message);
-                // Reverte visualmente se der erro
-                badge.textContent = 'NÃO ENVIADO';
-                badge.classList.remove('bg-secondary');
-                badge.classList.add('bg-danger');
-            }
-        });
-
-        async function logout() {
-            await fetch('/logout', {
-                method: 'POST',
-                credentials: 'include'
+                tbody.appendChild(tr);
             });
 
-            window.location.href = '/login.html';
+            document.getElementById('contador').textContent = `Pendentes para envio: ${pendentes}`;
+        } catch (err) {
+            alert(`Erro: ${err.message}`);
+            document.getElementById('contador').textContent = 'Erro ao carregar.';
         }
+    }
 
+    // Envio de e-mails selecionados
+    document.getElementById('formEmails').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const checkboxes = document.querySelectorAll('input[name="selecionado"]:checked');
+        const selecionados = Array.from(checkboxes).map(cb => JSON.parse(cb.value));
+        if (selecionados.length === 0) return alert("Selecione pelo menos um e-mail.");
 
+        const loading = document.querySelector('.loading');
+        loading.style.display = 'inline-flex';
 
-        carregarContatos();
-    </script>
-</body>
+        try {
+            const res = await fetch('/enviar-emails', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ emails: selecionados })
+            });
 
-</html>
+            if (!res.ok) throw new Error("Erro ao enviar e-mails.");
+
+            const result = await res.json();
+            alert(`Foram enviados ${result.enviados} e-mails com sucesso.`);
+            carregarContatos();
+        } catch (err) {
+            alert(`Erro: ${err.message}`);
+        } finally {
+            loading.style.display = 'none';
+        }
+    });
+
+    // Resetar todos os status
+    document.getElementById('resetarStatus').addEventListener('click', async () => {
+        if (!confirm("Tem certeza que deseja resetar todos os status para 'NÃO ENVIADO'?")) return;
+
+        try {
+            const res = await fetch('/resetar-status', { method: 'POST' });
+            if (!res.ok) throw new Error("Erro ao resetar status.");
+            alert("Todos os status foram resetados com sucesso.");
+            carregarContatos();
+        } catch (err) {
+            alert(`Erro: ${err.message}`);
+        }
+    });
+
+    // Finalizar botão individual
+    document.addEventListener('click', async function (e) {
+        if (!e.target.classList.contains('btn-finalizar')) return;
+
+        const codEmpresa = e.target.dataset.cod;
+        const button = e.target;
+        const td = button.closest('td');
+        const badge = td.querySelector('.badge');
+
+        // Atualiza visualmente
+        badge.textContent = 'FINALIZADO';
+        badge.className = 'badge bg-secondary text-uppercase';
+        button.remove(); // Remove o botão
+
+        try {
+            const res = await fetch('/atualizar-status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cod: codEmpresa, status: 'FINALIZADO' })
+            });
+
+            if (!res.ok) throw new Error(`Erro ${res.status}`);
+        } catch (err) {
+            alert('Erro ao salvar no servidor: ' + err.message);
+            // Reverter mudanças visuais
+            badge.textContent = 'NÃO ENVIADO';
+            badge.className = 'badge bg-danger text-uppercase';
+            td.insertAdjacentHTML('beforeend', `<button class="btn btn-sm btn-outline-light btn-finalizar" data-cod="${codEmpresa}">Finalizar</button>`);
+        }
+    });
+
+    carregarContatos();
+</script>

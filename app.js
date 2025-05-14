@@ -1,7 +1,6 @@
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
-const { Op } = require('sequelize');
 const xlsx = require('xlsx');
 const fs = require('fs');
 

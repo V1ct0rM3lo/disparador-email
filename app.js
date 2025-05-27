@@ -89,25 +89,24 @@ app.post('/enviar-emails', async (req, res) => {
   for (const contato of selecionados) {
     try {
       await transporter.sendMail({
-        from: `"Disparador" <${process.env.EMAIL_USER}>`,
+          from: `"Grupo CMB" <${process.env.EMAIL_USER}>`,
         to: contato.email,
         subject: '🔔 Notificação do Sistema - Disparo Automático',
         html: `
     <div style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
       <div style="background-color: #1e1e2f; color: #ffffff; padding: 15px; border-radius: 8px 8px 0 0;">
-        <h2 style="margin: 0;">🚀 Sistema de Disparo Automático</h2>
+        <h2 style="margin: 0;">GRUPO CMB - Assessoria Contábil e Consultoria Empresarial</h2>
       </div>
 
       <div style="background-color: #ffffff; padding: 20px; border-radius: 0 0 8px 8px;">
-        <p>Olá, tudo certo? 🤖</p>
+        <p>Prezados Clientes</p>
+<p>Com os processos de inovações das escriturações contábeis do Grupo CMB, estamos enviando o link para download dos extratos bancários automaticamente.
+Para isso, precisamos que acessem o link disponível, para habilitar nossa plataforma. clicando no botão abaixo:</p>
+        
 
-        <p>Este e-mail foi enviado automaticamente pelo nosso sistema Node.js como parte de um teste de funcionalidade.</p>
-
-        <p>Você pode acessar nosso painel clicando no botão abaixo:</p>
-
-        <a href="https://seusite.com/painel" 
+        <a href="https://extratoss.ssparisi.com/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGllbnRJZCI6IjQwNDI4MCIsImlhdCI6MTc0ODAwMDM5NSwiZXhwIjoxNzQ4MTczMTk1fQ.uK65JMJlR7LVXSo6IaUy8LEpXrlZW3xMvUvVw-Gm7Sg" 
            style="display: inline-block; padding: 12px 24px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
-          🔗 Acessar Painel
+          🔗 Clique AQUI
         </a>
 
         <p style="margin-top: 20px; font-size: 12px; color: #888;">Se você não solicitou este e-mail, apenas ignore esta mensagem.</p>

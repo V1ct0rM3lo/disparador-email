@@ -98,7 +98,7 @@ Para isso, precisamos que acessem o link disponível, para habilitar nossa plata
           🔗 Acessar Plataforma
         </a>
 
-        <p style="margin-top: 20px; font-size: 12px; color: #888;">Se você não solicitou este e-mail, apenas ignore esta mensagem.</p>
+        <p style="margin-top: 20px; font-size: 12px; color: #888;">Qualquer dúvida entrar em contato: 18997272823 ou victorsilvamelo13123@gmail.com</p>
 
       <img src="https://disparador-email.onrender.com/pixel?email=${encodeURIComponent(contato.email)}" width="1" height="1" style="display:none;">
 

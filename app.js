@@ -93,7 +93,7 @@ app.post('/enviar-emails', async (req, res) => {
 Para isso, precisamos que acessem o link disponível, para habilitar nossa plataforma. clicando no botão abaixo:</p>
         
 
-        <a href="https://extratoss.ssparisi.com/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGllbnRJZCI6IjQwNDI4MCIsImlhdCI6MTc0ODAwMDM5NSwiZXhwIjoxNzQ4MTczMTk1fQ.uK65JMJlR7LVXSo6IaUy8LEpXrlZW3xMvUvVw-Gm7Sg" 
+        <a href="https://extratoss.ssparisi.com/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGllbnRJZCI6IjQwNDI4MCIsImlhdCI6MTc0ODUzOTA3NSwiZXhwIjoxNzQ4NzExODc1fQ.Trn9rAU7cKn7iDFoHjtmooY8aEapCLZ0KkYnv2Jc8Iw" 
            style="display: inline-block; padding: 12px 24px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
           🔗 Acessar Plataforma
         </a>

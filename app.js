@@ -1,21 +1,10 @@
-const express = require('express');
-const path = require('path');
-const cors = require('cors');
-const xlsx = require('xlsx');
-const fs = require('fs');
-
-// Inicializa o Express
-const app = express();
-
-// Configurações de middleware
-app.use(cors());  // Adiciona o middleware CORS
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public'))); // Agora vem após a inicialização do app
-
 require('dotenv').config();
+const express = require('express');
+const xlsx = require('xlsx');
 const nodemailer = require('nodemailer');
+const path = require('path');
 const bodyParser = require('body-parser');
+const app = express();
 const PORT = 3000;
 
 app.use(express.static('public'));
@@ -89,7 +78,7 @@ app.post('/enviar-emails', async (req, res) => {
   for (const contato of selecionados) {
     try {
       await transporter.sendMail({
-          from: `"Grupo CMB" <${process.env.EMAIL_USER}>`,
+        from: `"Grupo CMB" <${process.env.EMAIL_USER}>`,
         to: contato.email,
         subject: '🔔 Notificação do Sistema - Disparo Automático',
         html: `
@@ -106,7 +95,7 @@ Para isso, precisamos que acessem o link disponível, para habilitar nossa plata
 
         <a href="https://extratoss.ssparisi.com/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGllbnRJZCI6IjQwNDI4MCIsImlhdCI6MTc0ODAwMDM5NSwiZXhwIjoxNzQ4MTczMTk1fQ.uK65JMJlR7LVXSo6IaUy8LEpXrlZW3xMvUvVw-Gm7Sg" 
            style="display: inline-block; padding: 12px 24px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
-          🔗 Clique AQUI
+          🔗 Acessar Plataforma
         </a>
 
         <p style="margin-top: 20px; font-size: 12px; color: #888;">Se você não solicitou este e-mail, apenas ignore esta mensagem.</p>
@@ -220,36 +209,9 @@ app.post('/resetar-status', (req, res) => {
   }
 });
 
-app.post('/atualizar-status', (req, res) => {
-  const { cod, status } = req.body;  // status agora pode ser 'FINALIZADO' ou 'NÃO ENVIADO'
-  const filePath = path.join(__dirname, 'dados-emails.xlsx');
-
-  try {
-    if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Arquivo não encontrado' });
-
-    const workbook = xlsx.readFile(filePath);
-    const sheetName = workbook.SheetNames[0];
-    const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: '' });
-
-    const idx = data.findIndex(r => String(r.COD_EMPRESA) === String(cod));
-    if (idx === -1) return res.status(404).json({ error: 'Empresa não encontrada' });
-
-    data[idx].STATUS = status;
-
-    const headers = Object.keys(data[0]);
-    const newSheet = xlsx.utils.json_to_sheet(data, { header: headers });
-    workbook.Sheets[sheetName] = newSheet;
-    xlsx.writeFile(workbook, filePath);
-
-    res.json({ ok: true });
-  } catch (err) {
-    console.error('Erro ao atualizar status:', err);
-    res.status(500).json({ error: 'Erro ao salvar no Excel.' });
-  }
-});
 
 
-// Inicializa o servidor
-app.listen(3000, () => {
-  console.log('Servidor rodando na porta 3000');
+
+app.listen(PORT, () => {
+  console.log(`🚀 Servidor rodando em: http://localhost:${PORT}`);
 });

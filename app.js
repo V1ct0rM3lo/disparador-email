@@ -80,7 +80,7 @@ app.post('/enviar-emails', async (req, res) => {
       await transporter.sendMail({
         from: `"Grupo CMB" <${process.env.EMAIL_USER}>`,
         to: contato.email,
-        subject: '🔔 Notificação do Sistema - Disparo Automático',
+        subject: '🔔GRUPO CMB - Assessoria Contábil e Consultoria Empresarial',
         html: `
     <div style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
       <div style="background-color: #1e1e2f; color: #ffffff; padding: 15px; border-radius: 8px 8px 0 0;">
@@ -98,7 +98,7 @@ Para isso, precisamos que acessem o link disponível, para habilitar nossa plata
           🔗 Acessar Plataforma
         </a>
 
-        <p style="margin-top: 20px; font-size: 12px; color: #888;">Qualquer dúvida entrar em contato: 18997272823 ou victorsilvamelo13123@gmail.com</p>
+        <p style="margin-top: 20px; font-size: 12px; color: #888;">Qualquer dúvida entrar em contato: suporte@gurpocmb.com.br</p>
 
       <img src="https://disparador-email.onrender.com/pixel?email=${encodeURIComponent(contato.email)}" width="1" height="1" style="display:none;">
 
